@@ -35,6 +35,7 @@ export function useLiff() {
 export default function LiffProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [step, setStep] = useState("SDK読み込み中...");
   const [profile, setProfile] = useState<LiffProfile | null>(null);
   const [groupId, setGroupId] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -43,37 +44,56 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
   const initCalled = useRef(false);
 
   const init = useCallback(async () => {
-    // 二重実行を防ぐ
     if (initCalled.current) return;
     initCalled.current = true;
 
     try {
+      // ① LIFF ID チェック
+      const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
+      setStep(`① LIFF ID確認中... (${liffId ?? "未設定"})`);
+      if (!liffId) {
+        setError("LIFF IDが未設定です。VercelのNEXT_PUBLIC_LIFF_IDを確認してください。");
+        return;
+      }
+
+      // ② window.liff チェック
+      setStep("② LIFF SDK確認中...");
       const liff = window.liff;
       if (!liff) {
         setError("LIFF SDKが見つかりません。LINEアプリから開いてください。");
         return;
       }
 
-      // liff.init() に10秒のタイムアウトを設定
-      const liffInitPromise = liff.init({ liffId: process.env.NEXT_PUBLIC_LIFF_ID! });
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("LIFF初期化がタイムアウトしました。LINEアプリから開き直してください。")), 10000)
-      );
-      await Promise.race([liffInitPromise, timeoutPromise]);
+      // ③ liff.init()
+      setStep(`③ liff.init()実行中... (ID: ${liffId})`);
+      await Promise.race([
+        liff.init({ liffId }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error(`liff.init()が10秒でタイムアウト (LIFF ID: ${liffId})`)), 10000)
+        ),
+      ]);
 
+      // ④ ログイン確認
+      setStep("④ ログイン確認中...");
       if (!liff.isLoggedIn()) {
+        setStep("④ LINEログインにリダイレクト中...");
         liff.login();
         return;
       }
 
+      // ⑤ コンテキスト取得
+      setStep("⑤ グループ情報取得中...");
       const ctx = liff.getContext();
+      const ctxJson = JSON.stringify(ctx);
       const gId: string = ctx?.groupId ?? process.env.NEXT_PUBLIC_DEV_GROUP_ID ?? "";
 
       if (!gId) {
-        setError("LINEグループチャット内から開いてください。");
+        setError(`グループIDが取得できません。LINEグループチャット内から開いてください。\ncontext: ${ctxJson}`);
         return;
       }
 
+      // ⑥ プロフィール取得
+      setStep("⑥ プロフィール取得中...");
       const p = await liff.getProfile();
       const liffProfile: LiffProfile = {
         userId: p.userId,
@@ -81,6 +101,8 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
         pictureUrl: p.pictureUrl,
       };
 
+      // ⑦ バックエンド初期化
+      setStep("⑦ サーバー初期化中...");
       const res = await fetch("/api/init-group", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -94,7 +116,7 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        setError(body.error ?? "初期化に失敗しました。");
+        setError(`サーバーエラー (${res.status}): ${body.error ?? "不明"}`);
         return;
       }
 
@@ -107,25 +129,16 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
       setCurrentUser(m?.find((u: User) => u.user_id === liffProfile.userId) ?? null);
       setReady(true);
     } catch (e) {
-      initCalled.current = false; // エラー時はリトライ可能にする
-      setError(e instanceof Error ? e.message : "不明なエラーが発生しました。");
+      initCalled.current = false;
+      setError(e instanceof Error ? e.message : String(e));
     }
   }, []);
-
-  // SDKが読み込まれる前にタイムアウトエラーを出す（15秒）
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!ready && !error) {
-        setError("読み込みがタイムアウトしました。LINEアプリから開き直してください。");
-      }
-    }, 15000);
-    return () => clearTimeout(timer);
-  }, [ready, error]);
 
   const reload = useCallback(() => {
     initCalled.current = false;
     setReady(false);
     setError(null);
+    setStep("再初期化中...");
     init();
   }, [init]);
 
@@ -137,9 +150,16 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
         src="https://static.line-scdn.net/liff/edge/2/sdk.js"
         strategy="afterInteractive"
         onLoad={init}
-        onError={() => setError("LIFF SDKの読み込みに失敗しました。LINEアプリから開いてください。")}
+        onError={() => setError("LIFF SDKスクリプトの読み込みに失敗しました。")}
       />
       <Ctx.Provider value={{ ready, error, profile, groupId, currentUser, members, activeTrip, isAdmin, reload }}>
+        {/* ローディング中はステップを表示 */}
+        {!ready && !error && (
+          <div className="fixed inset-0 flex flex-col items-center justify-center bg-white z-50 p-6">
+            <div className="w-10 h-10 border-4 border-brand-green border-t-transparent rounded-full animate-spin mb-4" />
+            <p className="text-sm text-gray-500 text-center">{step}</p>
+          </div>
+        )}
         {children}
       </Ctx.Provider>
     </>
