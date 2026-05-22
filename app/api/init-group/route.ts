@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
 
   const allowedGroupId = process.env.ALLOWED_LINE_GROUP_ID;
   if (allowedGroupId && groupId !== allowedGroupId) {
-    return NextResponse.json({ error: `グループID不一致: 受信=${groupId} / 設定=${allowedGroupId}` }, { status: 403 });
+    return NextResponse.json({ error: "このグループは許可されていません" }, { status: 403 });
   }
 
   const supabase = createAdminClient();
