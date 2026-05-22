@@ -5,6 +5,9 @@ export type SavingStatus = "pending" | "approved";
 
 export interface Group {
   group_id: string;
+  invite_code: string;
+  created_by: string | null;
+  approver_id: string | null;
   created_at: string;
 }
 

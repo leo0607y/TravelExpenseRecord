@@ -3,10 +3,13 @@
 -- Supabase SQL Editorで実行する
 -- ============================================================
 
--- Groups（LINEグループ）
+-- Groups（旅行グループ）
 CREATE TABLE IF NOT EXISTS groups (
-  group_id  TEXT PRIMARY KEY,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  group_id   TEXT PRIMARY KEY,
+  invite_code TEXT UNIQUE NOT NULL,
+  created_by  TEXT,
+  approver_id TEXT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Users（LINEユーザー）

@@ -16,9 +16,11 @@ interface TripData {
 }
 
 export default function HomeScreen() {
-  const { activeTrip, members, currentUser, isAdmin, reload } = useLiff();
+  const { activeTrip, members, currentUser, isAdmin, canApprove, group, reload } = useLiff();
   const [data, setData] = useState<TripData | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [changingApprover, setChangingApprover] = useState(false);
+  const [newApproverId, setNewApproverId] = useState("");
 
   const fetchData = useCallback(async () => {
     if (!activeTrip) return;
@@ -40,7 +42,6 @@ export default function HomeScreen() {
   const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
   const totalCash = expenses.filter((e) => e.payment_type === "cash").reduce((s, e) => s + e.amount, 0);
 
-  // メンバーごとの積立ステータス
   const savingStatus = (userId: string) => {
     const s = savings.find((s) => s.user_id === userId);
     if (!s) return { label: "未申請", color: "bg-gray-200 text-gray-600" };
@@ -49,9 +50,26 @@ export default function HomeScreen() {
   };
 
   const approveSaving = async (savingId: string) => {
-    await fetch(`/api/savings/${savingId}/approve`, { method: "POST" });
+    await fetch(`/api/savings/${savingId}/approve`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requesterId: currentUser?.user_id }),
+    });
     fetchData();
   };
+
+  const setApprover = async () => {
+    if (!group || !currentUser || !newApproverId) return;
+    await fetch(`/api/groups/${group.group_id}/approver`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requesterId: currentUser.user_id, approverId: newApproverId }),
+    });
+    setChangingApprover(false);
+    reload();
+  };
+
+  const currentApproverName = members.find((m) => m.user_id === group?.approver_id)?.display_name ?? "未設定";
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -72,9 +90,7 @@ export default function HomeScreen() {
         {/* 総支出カード */}
         <div className="bg-white rounded-2xl p-4 shadow-sm">
           <p className="text-xs text-gray-500">🎉 ワクワク総支出</p>
-          <p className="text-3xl font-bold text-gray-800 mt-1">
-            ¥{totalExpenses.toLocaleString()}
-          </p>
+          <p className="text-3xl font-bold text-gray-800 mt-1">¥{totalExpenses.toLocaleString()}</p>
           <p className="text-sm text-gray-500 mt-1">
             💳 カード ¥{totalCard.toLocaleString()} ／ 💴 現金 ¥{totalCash.toLocaleString()}
           </p>
@@ -83,9 +99,7 @@ export default function HomeScreen() {
         {/* プール残高カード */}
         <div className="bg-white rounded-2xl p-4 shadow-sm">
           <p className="text-xs text-gray-500">💰 口座プール残高</p>
-          <p className="text-2xl font-bold text-blue-600 mt-1">
-            ¥{poolBalance.toLocaleString()}
-          </p>
+          <p className="text-2xl font-bold text-blue-600 mt-1">¥{poolBalance.toLocaleString()}</p>
           <p className="text-xs text-gray-400 mt-1">
             繰越 ¥{trip.carry_over_in.toLocaleString()} ＋ 積立 ¥{approvedSavings.reduce((s, r) => s + r.amount, 0).toLocaleString()} － カード ¥{totalCard.toLocaleString()}
           </p>
@@ -97,9 +111,7 @@ export default function HomeScreen() {
           <div className="grid grid-cols-3 gap-2">
             {members.map((m) => {
               const st = savingStatus(m.user_id);
-              const pendingSaving = savings.find(
-                (s) => s.user_id === m.user_id && s.status === "pending"
-              );
+              const pendingSaving = savings.find((s) => s.user_id === m.user_id && s.status === "pending");
               return (
                 <div key={m.user_id} className="text-center">
                   {m.picture_url ? (
@@ -111,8 +123,7 @@ export default function HomeScreen() {
                   )}
                   <p className="text-xs mt-1 truncate">{m.display_name}</p>
                   <span className={`text-xs px-2 py-0.5 rounded-full ${st.color}`}>{st.label}</span>
-                  {/* 管理者のみ承認ボタンを表示 */}
-                  {isAdmin && pendingSaving && (
+                  {canApprove && pendingSaving && (
                     <button
                       onClick={() => approveSaving(pendingSaving.saving_id)}
                       className="mt-1 text-xs bg-brand-green text-white rounded-full px-2 py-0.5 block mx-auto"
@@ -125,13 +136,50 @@ export default function HomeScreen() {
             })}
           </div>
 
+          {/* 入金確認担当者 */}
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-400">入金確認担当者</p>
+                <p className="text-sm font-medium text-gray-700">{currentApproverName}</p>
+              </div>
+              {isAdmin && !changingApprover && (
+                <button
+                  onClick={() => { setChangingApprover(true); setNewApproverId(group?.approver_id ?? ""); }}
+                  className="text-xs text-brand-green underline"
+                >
+                  変更
+                </button>
+              )}
+            </div>
+            {changingApprover && (
+              <div className="mt-2 flex gap-2">
+                <select
+                  value={newApproverId}
+                  onChange={(e) => setNewApproverId(e.target.value)}
+                  className="flex-1 border rounded-xl px-3 py-2 text-sm"
+                >
+                  {members.map((m) => (
+                    <option key={m.user_id} value={m.user_id}>{m.display_name}</option>
+                  ))}
+                </select>
+                <button onClick={setApprover} className="bg-brand-green text-white rounded-xl px-3 text-sm font-bold">
+                  確定
+                </button>
+                <button onClick={() => setChangingApprover(false)} className="text-gray-400 text-sm">
+                  取消
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* 自分の積立申請ボタン */}
           {currentUser && !savings.find((s) => s.user_id === currentUser.user_id) && (
             <SavingForm tripId={trip.trip_id} userId={currentUser.user_id} onDone={fetchData} />
           )}
         </div>
 
-        {/* 直近の支出リスト */}
+        {/* 支出履歴 */}
         <div className="bg-white rounded-2xl p-4 shadow-sm">
           <p className="text-xs text-gray-500 mb-3">📋 支出履歴</p>
           {expenses.length === 0 && (
@@ -147,17 +195,13 @@ export default function HomeScreen() {
                   <div className="flex items-center justify-between py-2 border-b border-gray-100">
                     <div>
                       <p className="text-sm font-medium text-gray-800">
-                        {e.title}
-                        {e.image_url && " 📸"}
+                        {e.title}{e.image_url && " 📸"}
                       </p>
                       <p className="text-xs text-gray-400">
-                        {e.paid_at} ／ {e.payer.display_name} ／{" "}
-                        {e.payment_type === "card" ? "💳" : "💴"}
+                        {e.paid_at} ／ {e.payer.display_name} ／ {e.payment_type === "card" ? "💳" : "💴"}
                       </p>
                     </div>
-                    <p className="text-sm font-bold text-gray-800">
-                      ¥{e.amount.toLocaleString()}
-                    </p>
+                    <p className="text-sm font-bold text-gray-800">¥{e.amount.toLocaleString()}</p>
                   </div>
                 </button>
                 {expandedId === e.expense_id && (
@@ -193,7 +237,7 @@ export default function HomeScreen() {
         )}
       </div>
 
-      {/* 固定フッター：支出登録ボタン */}
+      {/* 固定フッター */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t">
         <Link
           href="/expense"
