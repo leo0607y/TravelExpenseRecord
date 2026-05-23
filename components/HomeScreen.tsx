@@ -23,6 +23,7 @@ export default function HomeScreen() {
   const [newApproverId, setNewApproverId] = useState("");
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleInput, setTitleInput] = useState("");
+  const [codeCopied, setCodeCopied] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!activeTrip) return;
@@ -69,6 +70,13 @@ export default function HomeScreen() {
     });
     setChangingApprover(false);
     reload();
+  };
+
+  const copyInviteCode = async () => {
+    if (!group?.invite_code) return;
+    await navigator.clipboard.writeText(group.invite_code).catch(() => {});
+    setCodeCopied(true);
+    setTimeout(() => setCodeCopied(false), 2000);
   };
 
   const saveTitle = async () => {
@@ -223,6 +231,24 @@ export default function HomeScreen() {
               </div>
             )}
           </div>
+
+          {/* 招待コード */}
+          {group?.invite_code && (
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <p className="text-xs text-gray-400 mb-2">招待コード（メンバーに共有）</p>
+              <div className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
+                <span className="text-2xl font-mono font-bold tracking-widest text-brand-green">
+                  {group.invite_code}
+                </span>
+                <button
+                  onClick={copyInviteCode}
+                  className="text-xs text-brand-green underline ml-3"
+                >
+                  {codeCopied ? "コピー済み" : "コピー"}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* 自分の積立申請ボタン */}
           {currentUser && !savings.find((s) => s.user_id === currentUser.user_id) && (
