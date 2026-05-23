@@ -223,17 +223,29 @@ export default function ExpenseForm() {
               </button>
             </div>
           ) : (
-            <label className="mt-2 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl py-6 cursor-pointer hover:border-brand-green">
-              <span className="text-2xl">📷</span>
-              <span className="text-sm text-gray-400 mt-1">タップして追加</span>
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={handleImageChange}
-                className="hidden"
-              />
-            </label>
+            <div className="mt-2 flex gap-3">
+              <label className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl py-5 cursor-pointer hover:border-brand-green">
+                <span className="text-2xl">📷</span>
+                <span className="text-xs text-gray-400 mt-1">カメラ</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+              </label>
+              <label className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl py-5 cursor-pointer hover:border-brand-green">
+                <span className="text-2xl">🖼️</span>
+                <span className="text-xs text-gray-400 mt-1">アルバム</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+              </label>
+            </div>
           )}
         </div>
       </div>

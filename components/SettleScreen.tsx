@@ -1,24 +1,57 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useLiff } from "./LiffProvider";
-import type { TripSummary } from "@/types";
+import type { TripSummary, Expense } from "@/types";
+
+type ExpenseWithPayer = Expense & { payer: { display_name: string } };
 
 export default function SettleScreen() {
   const router = useRouter();
   const { activeTrip, members, isAdmin, reload } = useLiff();
   const [summary, setSummary] = useState<TripSummary | null>(null);
+  const [expenses, setExpenses] = useState<ExpenseWithPayer[]>([]);
   const [nextTitle, setNextTitle] = useState("次の旅行");
   const [settling, setSettling] = useState(false);
   const [done, setDone] = useState(false);
+  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
+  const [editAmount, setEditAmount] = useState("");
+  const [savingAmount, setSavingAmount] = useState(false);
+
+  const fetchSummary = useCallback(async () => {
+    if (!activeTrip) return;
+    const res = await fetch(`/api/settle?tripId=${activeTrip.trip_id}`);
+    if (res.ok) setSummary(await res.json());
+  }, [activeTrip]);
+
+  const fetchExpenses = useCallback(async () => {
+    if (!activeTrip) return;
+    const res = await fetch(`/api/trips/${activeTrip.trip_id}`);
+    if (res.ok) {
+      const data = await res.json();
+      setExpenses(data.expenses ?? []);
+    }
+  }, [activeTrip]);
 
   useEffect(() => {
-    if (!activeTrip) return;
-    fetch(`/api/settle?tripId=${activeTrip.trip_id}`)
-      .then((r) => r.json())
-      .then(setSummary);
-  }, [activeTrip]);
+    fetchSummary();
+    fetchExpenses();
+  }, [fetchSummary, fetchExpenses]);
+
+  const updateExpenseAmount = async (expenseId: string) => {
+    const newAmount = Number(editAmount);
+    if (!newAmount || newAmount <= 0) return;
+    setSavingAmount(true);
+    await fetch(`/api/expenses/${expenseId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount: newAmount }),
+    });
+    setEditingExpenseId(null);
+    setSavingAmount(false);
+    await Promise.all([fetchSummary(), fetchExpenses()]);
+  };
 
   const settle = async () => {
     if (!activeTrip) return;
@@ -47,7 +80,7 @@ export default function SettleScreen() {
         <div className="text-6xl mb-4">🎉</div>
         <h2 className="text-xl font-bold text-gray-800 mb-2">精算完了！</h2>
         <p className="text-gray-500 mb-6">
-          繰越金 ¥{summary.pool_balance.toLocaleString()} で次の旅行を開始しました
+          繰越金 ¥{Math.max(0, summary.pool_balance).toLocaleString()} で次の旅行を開始しました
         </p>
         <button
           onClick={() => router.push("/")}
@@ -58,6 +91,8 @@ export default function SettleScreen() {
       </div>
     );
   }
+
+  const shortfall = summary.pool_balance < 0 ? Math.abs(Math.round(summary.pool_balance)) : 0;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -77,10 +112,79 @@ export default function SettleScreen() {
           <p className="text-sm text-gray-400 mt-1">
             💳 ¥{summary.total_card.toLocaleString()} ／ 💴 ¥{summary.total_cash.toLocaleString()}
           </p>
-          <p className="text-xs text-blue-500 mt-2">
-            プール残高（次回繰越）：¥{summary.pool_balance.toLocaleString()}
+          <p className={`text-xs mt-2 font-bold ${summary.pool_balance < 0 ? "text-red-500" : "text-blue-500"}`}>
+            プール残高：¥{summary.pool_balance.toLocaleString()}
           </p>
         </div>
+
+        {/* 積立不足アラート */}
+        {shortfall > 0 && (
+          <div className="bg-red-50 rounded-2xl p-4 shadow-sm border border-red-200">
+            <p className="text-sm font-bold text-red-600 mb-1">⚠️ 積立不足 - カード代金のために追加振込が必要</p>
+            <p className="text-3xl font-black text-red-600">¥{shortfall.toLocaleString()}</p>
+            <p className="text-xs text-red-500 mt-1">追加が必要な合計額</p>
+            <p className="text-sm text-red-700 font-bold mt-2">
+              1人当たり目安：¥{Math.ceil(shortfall / Math.max(1, members.length)).toLocaleString()}
+            </p>
+          </div>
+        )}
+
+        {/* 支出一覧（管理者のみ金額修正可能） */}
+        {isAdmin && expenses.length > 0 && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm">
+            <p className="text-xs text-gray-500 mb-3">📋 支出一覧（金額を修正できます）</p>
+            <div className="space-y-2">
+              {expenses.map((e) => (
+                <div key={e.expense_id} className="border-b border-gray-100 pb-2 last:border-0 last:pb-0">
+                  {editingExpenseId === e.expense_id ? (
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate">{e.title}</p>
+                        <p className="text-xs text-gray-400">{e.payer.display_name} ／ {e.payment_type === "card" ? "💳" : "💴"}</p>
+                      </div>
+                      <input
+                        type="number"
+                        value={editAmount}
+                        onChange={(ev) => setEditAmount(ev.target.value)}
+                        className="w-24 border-2 border-brand-green rounded-lg px-2 py-1 text-sm text-right font-bold"
+                        autoFocus
+                      />
+                      <button
+                        onClick={() => updateExpenseAmount(e.expense_id)}
+                        disabled={savingAmount}
+                        className="text-xs bg-brand-green text-white rounded-lg px-2 py-1.5 font-bold disabled:opacity-50 whitespace-nowrap"
+                      >
+                        保存
+                      </button>
+                      <button
+                        onClick={() => setEditingExpenseId(null)}
+                        className="text-xs text-gray-400 whitespace-nowrap"
+                      >
+                        取消
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate">{e.title}</p>
+                        <p className="text-xs text-gray-400">{e.payer.display_name} ／ {e.payment_type === "card" ? "💳" : "💴"}</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <p className="text-sm font-bold text-gray-800">¥{e.amount.toLocaleString()}</p>
+                        <button
+                          onClick={() => { setEditingExpenseId(e.expense_id); setEditAmount(String(e.amount)); }}
+                          className="text-xs text-brand-green underline"
+                        >
+                          修正
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* 個人実質消費額 */}
         <div className="bg-white rounded-2xl p-4 shadow-sm">

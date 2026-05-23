@@ -21,6 +21,8 @@ export default function HomeScreen() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [changingApprover, setChangingApprover] = useState(false);
   const [newApproverId, setNewApproverId] = useState("");
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleInput, setTitleInput] = useState("");
 
   const fetchData = useCallback(async () => {
     if (!activeTrip) return;
@@ -69,6 +71,17 @@ export default function HomeScreen() {
     reload();
   };
 
+  const saveTitle = async () => {
+    if (!titleInput.trim()) return;
+    await fetch(`/api/trips/${trip.trip_id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: titleInput.trim() }),
+    });
+    setEditingTitle(false);
+    fetchData();
+  };
+
   const currentApproverName = members.find((m) => m.user_id === group?.approver_id)?.display_name ?? "未設定";
 
   return (
@@ -76,11 +89,36 @@ export default function HomeScreen() {
       {/* ヘッダー */}
       <div className="bg-brand-green text-white px-4 py-4">
         <div className="flex items-center justify-between">
-          <div>
+          <div className="flex-1 mr-3">
             <p className="text-xs opacity-80">現在の旅行</p>
-            <h1 className="text-lg font-bold">{trip.title}</h1>
+            {editingTitle ? (
+              <div className="flex items-center gap-2 mt-1">
+                <input
+                  type="text"
+                  value={titleInput}
+                  onChange={(e) => setTitleInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && saveTitle()}
+                  className="bg-white/20 text-white placeholder-white/60 rounded-lg px-2 py-1 text-sm flex-1 outline-none border border-white/40"
+                  autoFocus
+                />
+                <button onClick={saveTitle} className="text-xs bg-white text-brand-green rounded-lg px-2 py-1 font-bold whitespace-nowrap">保存</button>
+                <button onClick={() => setEditingTitle(false)} className="text-xs text-white/70 whitespace-nowrap">取消</button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg font-bold">{trip.title}</h1>
+                {isAdmin && (
+                  <button
+                    onClick={() => { setEditingTitle(true); setTitleInput(trip.title); }}
+                    className="text-white/70 text-base leading-none"
+                  >
+                    ✏️
+                  </button>
+                )}
+              </div>
+            )}
           </div>
-          <Link href="/history" className="text-xs bg-white/20 rounded-full px-3 py-1">
+          <Link href="/history" className="text-xs bg-white/20 rounded-full px-3 py-1 whitespace-nowrap">
             履歴
           </Link>
         </div>
@@ -99,10 +137,23 @@ export default function HomeScreen() {
         {/* プール残高カード */}
         <div className="bg-white rounded-2xl p-4 shadow-sm">
           <p className="text-xs text-gray-500">💰 口座プール残高</p>
-          <p className="text-2xl font-bold text-blue-600 mt-1">¥{poolBalance.toLocaleString()}</p>
+          <p className={`text-2xl font-bold mt-1 ${poolBalance < 0 ? "text-red-600" : "text-blue-600"}`}>
+            ¥{poolBalance.toLocaleString()}
+          </p>
           <p className="text-xs text-gray-400 mt-1">
             繰越 ¥{trip.carry_over_in.toLocaleString()} ＋ 積立 ¥{approvedSavings.reduce((s, r) => s + r.amount, 0).toLocaleString()} － カード ¥{totalCard.toLocaleString()}
           </p>
+          {poolBalance < 0 && (
+            <div className="bg-red-50 rounded-xl p-3 mt-3 border border-red-200">
+              <p className="text-xs text-red-600 font-bold">⚠️ 積立不足 - 追加振込が必要</p>
+              <p className="text-sm text-red-700 font-bold mt-1">
+                追加合計：¥{Math.abs(poolBalance).toLocaleString()}
+              </p>
+              <p className="text-xs text-red-500 mt-0.5">
+                1人当たり目安：¥{Math.ceil(Math.abs(poolBalance) / Math.max(1, members.length)).toLocaleString()}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* メンバー積立ステータス */}
