@@ -9,30 +9,36 @@ export async function GET(req: NextRequest) {
 
   const supabase = createAdminClient();
 
-  const [{ data: trip }, { data: rawExpenses }, { data: rawSavings }] = await Promise.all([
-    supabase.from("trips").select("*").eq("trip_id", tripId).single(),
-    supabase
-      .from("expenses")
-      .select("*, payer:users!payer_id(display_name), beneficiaries:expense_beneficiaries(user:users(*))")
-      .eq("trip_id", tripId)
-      .order("paid_at", { ascending: true }),
-    supabase
-      .from("savings")
-      .select("*, user:users(display_name)")
-      .eq("trip_id", tripId),
-  ]);
-
+  const { data: trip } = await supabase.from("trips").select("*").eq("trip_id", tripId).single();
   if (!trip) return NextResponse.json({ error: "旅行が見つかりません" }, { status: 404 });
 
-  const { data: members } = await supabase.from("users").select("*").eq("group_id", trip.group_id);
+  const [{ data: savingsRaw }, { data: expensesRaw }, { data: members }] = await Promise.all([
+    supabase.from("savings").select("*").eq("trip_id", tripId),
+    supabase.from("expenses").select("*").eq("trip_id", tripId).order("paid_at", { ascending: true }),
+    supabase.from("users").select("*").eq("group_id", trip.group_id),
+  ]);
 
-  const expenses: Expense[] = (rawExpenses ?? []).map((e) => ({
+  const expenseIds = (expensesRaw ?? []).map((e) => e.expense_id);
+  const { data: beneficiariesRaw } = expenseIds.length > 0
+    ? await supabase.from("expense_beneficiaries").select("*").in("expense_id", expenseIds)
+    : { data: [] as { expense_id: string; user_id: string }[] };
+
+  const userMap = Object.fromEntries((members ?? []).map((u: User) => [u.user_id, u]));
+
+  const expenses: Expense[] = (expensesRaw ?? []).map((e) => ({
     ...e,
-    payer: e.payer,
-    beneficiaries: (e.beneficiaries as { user: User }[]).map((b) => b.user),
+    payer: userMap[e.payer_id] ?? null,
+    beneficiaries: (beneficiariesRaw ?? [])
+      .filter((b) => b.expense_id === e.expense_id)
+      .map((b) => userMap[b.user_id] ?? null)
+      .filter(Boolean),
   }));
 
-  const savings: Saving[] = rawSavings ?? [];
+  const savings: Saving[] = (savingsRaw ?? []).map((s) => ({
+    ...s,
+    user: userMap[s.user_id] ?? null,
+  }));
+
   const approvedSavings = savings.filter((s) => s.status === "approved");
 
   const summary = calcTripSummary(
@@ -45,7 +51,7 @@ export async function GET(req: NextRequest) {
   const fmtYen = (n: number) => `¥${Math.round(n).toLocaleString("ja-JP")}`;
   const fmtDate = (s: string) => s.slice(0, 10);
 
-  const savingsRows = (members as User[] ?? []).map((m) => {
+  const savingsRows = ((members as User[]) ?? []).map((m) => {
     const s = approvedSavings.find((sv) => sv.user_id === m.user_id);
     return `<tr>
       <td>${m.display_name}</td>
@@ -57,8 +63,8 @@ export async function GET(req: NextRequest) {
   const totalApproved = approvedSavings.reduce((s, r) => s + r.amount, 0);
 
   const expenseRows = expenses.map((e) => {
-    const bens = (e.beneficiaries ?? []).map((b: User) => b.display_name).join("・");
-    const payerName = (e.payer as unknown as { display_name: string })?.display_name ?? "";
+    const bens = ((e.beneficiaries ?? []) as User[]).map((b) => b.display_name).join("・");
+    const payerName = (e.payer as User | null)?.display_name ?? "";
     const imgTag = e.image_url
       ? `<div class="receipt-img"><img src="${e.image_url}" alt="レシート" /></div>`
       : "";

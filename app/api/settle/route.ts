@@ -10,32 +10,35 @@ export async function GET(req: NextRequest) {
 
   const supabase = createAdminClient();
 
-  const [{ data: trip }, { data: savings }, { data: expenses }, { data: members }] =
-    await Promise.all([
-      supabase.from("trips").select("*").eq("trip_id", tripId).single(),
-      supabase.from("savings").select("*").eq("trip_id", tripId),
-      supabase
-        .from("expenses")
-        .select("*, beneficiaries:expense_beneficiaries(user:users(*))")
-        .eq("trip_id", tripId),
-      supabase.from("users").select("*").eq("group_id", "").then(async () => {
-        const { data: t } = await supabase.from("trips").select("group_id").eq("trip_id", tripId).single();
-        return supabase.from("users").select("*").eq("group_id", t?.group_id ?? "");
-      }),
-    ]);
-
+  const { data: trip } = await supabase.from("trips").select("*").eq("trip_id", tripId).single();
   if (!trip) return NextResponse.json({ error: "旅行が見つかりません" }, { status: 404 });
 
-  const normalizedExpenses: Expense[] = (expenses ?? []).map((e) => ({
+  const [{ data: savingsRaw }, { data: expensesRaw }, { data: members }] = await Promise.all([
+    supabase.from("savings").select("*").eq("trip_id", tripId),
+    supabase.from("expenses").select("*").eq("trip_id", tripId),
+    supabase.from("users").select("*").eq("group_id", trip.group_id),
+  ]);
+
+  const expenseIds = (expensesRaw ?? []).map((e) => e.expense_id);
+  const { data: beneficiariesRaw } = expenseIds.length > 0
+    ? await supabase.from("expense_beneficiaries").select("*").in("expense_id", expenseIds)
+    : { data: [] as { expense_id: string; user_id: string }[] };
+
+  const userMap = Object.fromEntries((members ?? []).map((u: User) => [u.user_id, u]));
+
+  const expenses: Expense[] = (expensesRaw ?? []).map((e) => ({
     ...e,
-    beneficiaries: (e.beneficiaries as { user: User }[]).map((b) => b.user),
+    beneficiaries: (beneficiariesRaw ?? [])
+      .filter((b) => b.expense_id === e.expense_id)
+      .map((b) => userMap[b.user_id] ?? null)
+      .filter(Boolean),
   }));
 
   const summary = calcTripSummary(
     trip.carry_over_in,
     (members as User[]) ?? [],
-    (savings as Saving[]) ?? [],
-    normalizedExpenses
+    (savingsRaw as Saving[]) ?? [],
+    expenses
   );
 
   return NextResponse.json(summary);
@@ -46,38 +49,39 @@ export async function POST(req: NextRequest) {
   const { tripId, nextTitle } = await req.json();
   const supabase = createAdminClient();
 
-  const { data: trip } = await supabase
-    .from("trips")
-    .select("*, savings(*), expenses(*)")
-    .eq("trip_id", tripId)
-    .single();
-
+  const { data: trip } = await supabase.from("trips").select("*").eq("trip_id", tripId).single();
   if (!trip) return NextResponse.json({ error: "旅行が見つかりません" }, { status: 404 });
 
-  // メンバー取得
-  const { data: members } = await supabase.from("users").select("*").eq("group_id", trip.group_id);
+  const [{ data: savingsRaw }, { data: expensesRaw }, { data: members }] = await Promise.all([
+    supabase.from("savings").select("*").eq("trip_id", tripId),
+    supabase.from("expenses").select("*").eq("trip_id", tripId),
+    supabase.from("users").select("*").eq("group_id", trip.group_id),
+  ]);
 
-  const { data: expenses } = await supabase
-    .from("expenses")
-    .select("*, beneficiaries:expense_beneficiaries(user:users(*))")
-    .eq("trip_id", tripId);
+  const expenseIds = (expensesRaw ?? []).map((e) => e.expense_id);
+  const { data: beneficiariesRaw } = expenseIds.length > 0
+    ? await supabase.from("expense_beneficiaries").select("*").in("expense_id", expenseIds)
+    : { data: [] as { expense_id: string; user_id: string }[] };
 
-  const normalizedExpenses: Expense[] = (expenses ?? []).map((e) => ({
+  const userMap = Object.fromEntries((members ?? []).map((u: User) => [u.user_id, u]));
+
+  const expenses: Expense[] = (expensesRaw ?? []).map((e) => ({
     ...e,
-    beneficiaries: (e.beneficiaries as { user: User }[]).map((b) => b.user),
+    beneficiaries: (beneficiariesRaw ?? [])
+      .filter((b) => b.expense_id === e.expense_id)
+      .map((b) => userMap[b.user_id] ?? null)
+      .filter(Boolean),
   }));
 
   const summary = calcTripSummary(
     trip.carry_over_in,
     (members as User[]) ?? [],
-    (trip.savings as Saving[]) ?? [],
-    normalizedExpenses
+    (savingsRaw as Saving[]) ?? [],
+    expenses
   );
 
-  // 現在の旅行を settled に
   await supabase.from("trips").update({ status: "settled" }).eq("trip_id", tripId);
 
-  // 次の旅行を作成（繰越金 = B_pool）
   const { data: newTrip } = await supabase
     .from("trips")
     .insert({
