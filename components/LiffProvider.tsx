@@ -3,7 +3,14 @@
 import { createContext, useContext, useState, useCallback, useRef } from "react";
 import Script from "next/script";
 import type { LiffProfile, Group, User, Trip } from "@/types";
-import JoinScreen from "./JoinScreen";
+import GroupSelectScreen from "./GroupSelectScreen";
+
+interface GroupEntry {
+  user: User;
+  group: Group;
+  trip: Trip | null;
+  members: User[];
+}
 
 interface LiffContextValue {
   ready: boolean;
@@ -17,6 +24,7 @@ interface LiffContextValue {
   isAdmin: boolean;
   canApprove: boolean;
   reload: () => void;
+  switchGroup: () => void;
 }
 
 const Ctx = createContext<LiffContextValue>({
@@ -31,6 +39,7 @@ const Ctx = createContext<LiffContextValue>({
   isAdmin: false,
   canApprove: false,
   reload: () => {},
+  switchGroup: () => {},
 });
 
 export function useLiff() {
@@ -41,7 +50,8 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [needLogin, setNeedLogin] = useState(false);
-  const [needJoin, setNeedJoin] = useState(false);
+  const [needGroupSelect, setNeedGroupSelect] = useState(false);
+  const [existingGroups, setExistingGroups] = useState<GroupEntry[]>([]);
   const [profile, setProfile] = useState<LiffProfile | null>(null);
   const [group, setGroup] = useState<Group | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -67,11 +77,14 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
         ),
       ]);
 
-      const loggedIn = liff.isLoggedIn();
-      if (!loggedIn) { setNeedLogin(true); return; }
+      if (!liff.isLoggedIn()) { setNeedLogin(true); return; }
 
       const p = await liff.getProfile();
-      const liffProfile: LiffProfile = { userId: p.userId, displayName: p.displayName, pictureUrl: p.pictureUrl };
+      const liffProfile: LiffProfile = {
+        userId: p.userId,
+        displayName: p.displayName,
+        pictureUrl: p.pictureUrl,
+      };
       setProfile(liffProfile);
 
       const res = await fetch(`/api/users/me?userId=${encodeURIComponent(liffProfile.userId)}`);
@@ -81,31 +94,28 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
         return;
       }
 
-      const { user, group: grp, members: mbrs, trip } = await res.json();
-      if (user?.group_id && grp) {
-        setGroup(grp);
-        setMembers(mbrs ?? []);
-        setActiveTrip(trip ?? null);
-        setCurrentUser(user);
-        setReady(true);
-      } else {
-        setNeedJoin(true);
-      }
+      const { groups } = await res.json();
+      setExistingGroups(groups ?? []);
+      setNeedGroupSelect(true);
     } catch (e) {
       initCalled.current = false;
       setError(e instanceof Error ? e.message : String(e));
     }
   }, []);
 
-  const handleJoined = useCallback((grp: Group, mbrs: User[], trip: Trip | null) => {
-    const me = mbrs.find((m) => m.user_id === profile?.userId) ?? null;
-    setGroup(grp);
-    setMembers(mbrs);
-    setActiveTrip(trip);
-    setCurrentUser(me);
-    setNeedJoin(false);
+  const handleGroupSelected = useCallback((
+    selectedGroup: Group,
+    selectedMembers: User[],
+    selectedTrip: Trip | null,
+    selectedUser: User
+  ) => {
+    setGroup(selectedGroup);
+    setMembers(selectedMembers);
+    setActiveTrip(selectedTrip);
+    setCurrentUser(selectedUser);
+    setNeedGroupSelect(false);
     setReady(true);
-  }, [profile]);
+  }, []);
 
   const handleLogin = () => {
     window.liff.login({ redirectUri: window.location.href });
@@ -116,7 +126,8 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
     setReady(false);
     setError(null);
     setNeedLogin(false);
-    setNeedJoin(false);
+    setNeedGroupSelect(false);
+    setExistingGroups([]);
     setProfile(null);
     setGroup(null);
     setCurrentUser(null);
@@ -124,6 +135,27 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
     setActiveTrip(null);
     init();
   }, [init]);
+
+  // グループ選択画面に戻る（グループ切り替え）
+  const switchGroup = useCallback(() => {
+    setReady(false);
+    setGroup(null);
+    setCurrentUser(null);
+    setMembers([]);
+    setActiveTrip(null);
+    // existingGroups は再取得
+    if (profile) {
+      fetch(`/api/users/me?userId=${encodeURIComponent(profile.userId)}`)
+        .then((r) => r.json())
+        .then(({ groups }) => {
+          setExistingGroups(groups ?? []);
+          setNeedGroupSelect(true);
+        })
+        .catch(() => setNeedGroupSelect(true));
+    } else {
+      setNeedGroupSelect(true);
+    }
+  }, [profile]);
 
   const isAdmin = currentUser?.role === "admin";
   const canApprove = group?.approver_id
@@ -138,7 +170,12 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
         onLoad={init}
         onError={() => setError("LIFF SDK の読み込みに失敗しました")}
       />
-      <Ctx.Provider value={{ ready, error, profile, group, groupId: group?.group_id ?? null, currentUser, members, activeTrip, isAdmin, canApprove, reload }}>
+      <Ctx.Provider value={{
+        ready, error, profile, group,
+        groupId: group?.group_id ?? null,
+        currentUser, members, activeTrip,
+        isAdmin, canApprove, reload, switchGroup,
+      }}>
         {!ready && (
           <div className="fixed inset-0 flex flex-col items-center justify-center bg-white z-50 p-6 gap-4">
             {error && (
@@ -157,10 +194,14 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
                 </button>
               </div>
             )}
-            {needJoin && profile && !error && (
-              <JoinScreen profile={profile} onJoined={handleJoined} />
+            {needGroupSelect && profile && !error && (
+              <GroupSelectScreen
+                profile={profile}
+                existingGroups={existingGroups}
+                onSelected={handleGroupSelected}
+              />
             )}
-            {!error && !needLogin && !needJoin && (
+            {!error && !needLogin && !needGroupSelect && (
               <div className="w-8 h-8 border-4 border-brand-green border-t-transparent rounded-full animate-spin" />
             )}
             {error && (

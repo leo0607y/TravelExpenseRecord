@@ -16,7 +16,7 @@ interface TripData {
 }
 
 export default function HomeScreen() {
-  const { activeTrip, members, currentUser, isAdmin, canApprove, group, reload } = useLiff();
+  const { activeTrip, members, currentUser, isAdmin, canApprove, group, reload, switchGroup } = useLiff();
   const [data, setData] = useState<TripData | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [changingApprover, setChangingApprover] = useState(false);
@@ -126,9 +126,17 @@ export default function HomeScreen() {
               </div>
             )}
           </div>
-          <Link href="/history" className="text-xs bg-white/20 rounded-full px-3 py-1 whitespace-nowrap">
-            履歴
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href="/history" className="text-xs bg-white/20 rounded-full px-3 py-1 whitespace-nowrap">
+              履歴
+            </Link>
+            <button
+              onClick={switchGroup}
+              className="text-xs bg-white/20 rounded-full px-3 py-1 whitespace-nowrap"
+            >
+              切替
+            </button>
+          </div>
         </div>
       </div>
 

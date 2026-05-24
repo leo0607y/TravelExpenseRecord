@@ -7,20 +7,32 @@ export async function GET(req: NextRequest) {
 
   const supabase = createAdminClient();
 
-  const { data: user, error: e1 } = await supabase
+  // ユーザーが参加している全グループを取得
+  const { data: userRecords, error } = await supabase
     .from("users")
-    .select("*")
-    .eq("user_id", userId)
-    .maybeSingle();
-  if (e1) return NextResponse.json({ error: e1.message }, { status: 500 });
+    .select("*, group:groups(*)")
+    .eq("user_id", userId);
 
-  if (!user?.group_id) return NextResponse.json({ user: null, group: null, members: [], trip: null });
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const [{ data: group }, { data: members }, { data: trip }] = await Promise.all([
-    supabase.from("groups").select("*").eq("group_id", user.group_id).maybeSingle(),
-    supabase.from("users").select("*").eq("group_id", user.group_id),
-    supabase.from("trips").select("*").eq("group_id", user.group_id).eq("status", "active").maybeSingle(),
+  if (!userRecords || userRecords.length === 0) {
+    return NextResponse.json({ groups: [] });
+  }
+
+  const groupIds = userRecords.map((u) => u.group_id);
+
+  // 各グループのアクティブトリップとメンバーを取得
+  const [{ data: trips }, { data: allMembers }] = await Promise.all([
+    supabase.from("trips").select("*").in("group_id", groupIds).eq("status", "active"),
+    supabase.from("users").select("*").in("group_id", groupIds),
   ]);
 
-  return NextResponse.json({ user, group, members: members ?? [], trip });
+  const groups = userRecords.map((u) => ({
+    user: u,
+    group: u.group,
+    trip: (trips ?? []).find((t) => t.group_id === u.group_id) ?? null,
+    members: (allMembers ?? []).filter((m) => m.group_id === u.group_id),
+  }));
+
+  return NextResponse.json({ groups });
 }

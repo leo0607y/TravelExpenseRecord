@@ -17,11 +17,20 @@ export async function POST(req: NextRequest) {
   if (e1) return NextResponse.json({ error: e1.message }, { status: 500 });
   if (!group) return NextResponse.json({ error: "招待コードが無効です" }, { status: 404 });
 
-  const { error: e2 } = await supabase.from("users").upsert(
-    { user_id: userId, display_name: displayName, picture_url: pictureUrl ?? null, group_id: group.group_id, role: "member" },
-    { onConflict: "user_id" }
-  );
-  if (e2) return NextResponse.json({ error: `参加失敗: ${e2.message}` }, { status: 500 });
+  // 既に参加済みかチェック
+  const { data: existing } = await supabase
+    .from("users")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("group_id", group.group_id)
+    .maybeSingle();
+
+  if (!existing) {
+    const { error: e2 } = await supabase.from("users").insert(
+      { user_id: userId, display_name: displayName, picture_url: pictureUrl ?? null, group_id: group.group_id, role: "member" }
+    );
+    if (e2) return NextResponse.json({ error: `参加失敗: ${e2.message}` }, { status: 500 });
+  }
 
   const [{ data: members }, { data: trip }] = await Promise.all([
     supabase.from("users").select("*").eq("group_id", group.group_id),

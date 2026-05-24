@@ -25,9 +25,8 @@ export async function POST(req: NextRequest) {
   });
   if (e1) return NextResponse.json({ error: `グループ作成失敗: ${e1.message}` }, { status: 500 });
 
-  const { error: e2 } = await supabase.from("users").upsert(
-    { user_id: userId, display_name: displayName, picture_url: pictureUrl ?? null, group_id: groupId, role: "admin" },
-    { onConflict: "user_id" }
+  const { error: e2 } = await supabase.from("users").insert(
+    { user_id: userId, display_name: displayName, picture_url: pictureUrl ?? null, group_id: groupId, role: "admin" }
   );
   if (e2) return NextResponse.json({ error: `ユーザー作成失敗: ${e2.message}` }, { status: 500 });
 
