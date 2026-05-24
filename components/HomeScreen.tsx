@@ -315,14 +315,22 @@ export default function HomeScreen() {
       </div>
 
       {/* 固定フッター */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t">
-        <Link
-          href="/expense"
-          className="block w-full text-center bg-brand-green text-white rounded-2xl py-4 text-lg font-bold shadow-lg"
-          onClick={reload}
-        >
-          ＋ 支出を記録する
-        </Link>
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t">
+        <div className="flex gap-2 p-3">
+          <Link
+            href="/expenses"
+            className="flex-1 text-center bg-gray-100 text-gray-700 rounded-2xl py-3 text-sm font-bold"
+          >
+            📋 支出一覧
+          </Link>
+          <Link
+            href="/expense"
+            className="flex-[2] text-center bg-brand-green text-white rounded-2xl py-3 text-base font-bold shadow"
+            onClick={reload}
+          >
+            ＋ 支出を記録する
+          </Link>
+        </div>
       </div>
     </div>
   );
