@@ -24,6 +24,7 @@ export default function HomeScreen() {
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleInput, setTitleInput] = useState("");
   const [codeCopied, setCodeCopied] = useState(false);
+  const [deletingGroup, setDeletingGroup] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!activeTrip) return;
@@ -72,6 +73,18 @@ export default function HomeScreen() {
       updateGroupApprover(newApproverId);
     }
     setChangingApprover(false);
+  };
+
+  const deleteGroup = async () => {
+    if (!group || !currentUser) return;
+    setDeletingGroup(true);
+    await fetch(`/api/groups/${group.group_id}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requesterId: currentUser.user_id }),
+    });
+    setDeletingGroup(false);
+    reload();
   };
 
   const copyInviteCode = async () => {
@@ -321,6 +334,37 @@ export default function HomeScreen() {
           >
             🏁 旅行を締める・精算する
           </Link>
+        )}
+
+        {/* 管理者のみ：グループ削除 */}
+        {isAdmin && (
+          deletingGroup ? (
+            <div className="bg-gray-100 rounded-2xl p-4 text-center space-y-3">
+              <p className="text-sm font-bold text-gray-700">本当にこのグループを削除しますか？</p>
+              <p className="text-xs text-gray-500">支出・積立・旅行履歴が全て削除されます。元に戻せません。</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={deleteGroup}
+                  className="flex-1 bg-red-600 text-white rounded-xl py-2 text-sm font-bold"
+                >
+                  削除する
+                </button>
+                <button
+                  onClick={() => setDeletingGroup(false)}
+                  className="flex-1 bg-white border border-gray-300 text-gray-600 rounded-xl py-2 text-sm"
+                >
+                  キャンセル
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setDeletingGroup(true)}
+              className="w-full text-center text-gray-400 text-xs py-2 underline"
+            >
+              このグループを削除する
+            </button>
+          )
         )}
       </div>
 
