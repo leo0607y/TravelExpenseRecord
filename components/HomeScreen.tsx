@@ -16,7 +16,7 @@ interface TripData {
 }
 
 export default function HomeScreen() {
-  const { activeTrip, members, currentUser, isAdmin, canApprove, group, reload, switchGroup } = useLiff();
+  const { activeTrip, members, currentUser, isAdmin, canApprove, group, reload, switchGroup, updateGroupApprover } = useLiff();
   const [data, setData] = useState<TripData | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [changingApprover, setChangingApprover] = useState(false);
@@ -63,13 +63,15 @@ export default function HomeScreen() {
 
   const setApprover = async () => {
     if (!group || !currentUser || !newApproverId) return;
-    await fetch(`/api/groups/${group.group_id}/approver`, {
+    const res = await fetch(`/api/groups/${group.group_id}/approver`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ requesterId: currentUser.user_id, approverId: newApproverId }),
     });
+    if (res.ok) {
+      updateGroupApprover(newApproverId);
+    }
     setChangingApprover(false);
-    reload();
   };
 
   const copyInviteCode = async () => {

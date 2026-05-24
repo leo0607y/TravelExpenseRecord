@@ -25,6 +25,7 @@ interface LiffContextValue {
   canApprove: boolean;
   reload: () => void;
   switchGroup: () => void;
+  updateGroupApprover: (approverId: string) => void;
 }
 
 const Ctx = createContext<LiffContextValue>({
@@ -40,6 +41,7 @@ const Ctx = createContext<LiffContextValue>({
   canApprove: false,
   reload: () => {},
   switchGroup: () => {},
+  updateGroupApprover: () => {},
 });
 
 export function useLiff() {
@@ -157,6 +159,10 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
     }
   }, [profile]);
 
+  const updateGroupApprover = useCallback((approverId: string) => {
+    setGroup((prev) => prev ? { ...prev, approver_id: approverId } : null);
+  }, []);
+
   const isAdmin = currentUser?.role === "admin";
   const canApprove = group?.approver_id
     ? currentUser?.user_id === group.approver_id
@@ -174,7 +180,7 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
         ready, error, profile, group,
         groupId: group?.group_id ?? null,
         currentUser, members, activeTrip,
-        isAdmin, canApprove, reload, switchGroup,
+        isAdmin, canApprove, reload, switchGroup, updateGroupApprover,
       }}>
         {!ready && (
           <div className="fixed inset-0 flex flex-col items-center justify-center bg-white z-50 p-6 gap-4">
