@@ -14,7 +14,6 @@ export default function SettleScreen() {
   const [expenses, setExpenses] = useState<ExpenseWithPayer[]>([]);
   const [nextTitle, setNextTitle] = useState("次の旅行");
   const [settling, setSettling] = useState(false);
-  const [done, setDone] = useState(false);
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState("");
   const [savingAmount, setSavingAmount] = useState(false);
@@ -64,32 +63,29 @@ export default function SettleScreen() {
     });
 
     if (res.ok) {
-      setDone(true);
       reload();
+      router.push("/");
     }
     setSettling(false);
   };
 
+  const openReport = () => {
+    if (!activeTrip) return;
+    const url = `/api/report?tripId=${activeTrip.trip_id}`;
+    try {
+      // LINEミニアプリ内では外部ブラウザで開く
+      if (typeof window !== "undefined" && window.liff?.openWindow) {
+        window.liff.openWindow({ url: window.location.origin + url, external: true });
+      } else {
+        window.open(url, "_blank");
+      }
+    } catch {
+      window.open(url, "_blank");
+    }
+  };
+
   if (!summary) {
     return <div className="flex items-center justify-center h-screen text-gray-400">計算中...</div>;
-  }
-
-  if (done) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen bg-green-50 p-6 text-center">
-        <div className="text-6xl mb-4">🎉</div>
-        <h2 className="text-xl font-bold text-gray-800 mb-2">精算完了！</h2>
-        <p className="text-gray-500 mb-6">
-          繰越金 ¥{Math.max(0, summary.pool_balance).toLocaleString()} で次の旅行を開始しました
-        </p>
-        <button
-          onClick={() => router.push("/")}
-          className="bg-brand-green text-white rounded-2xl px-8 py-3 font-bold"
-        >
-          ホームへ戻る
-        </button>
-      </div>
-    );
   }
 
   const shortfall = summary.pool_balance < 0 ? Math.abs(Math.round(summary.pool_balance)) : 0;
@@ -116,6 +112,14 @@ export default function SettleScreen() {
             プール残高：¥{summary.pool_balance.toLocaleString()}
           </p>
         </div>
+
+        {/* PDFサマリーダウンロード */}
+        <button
+          onClick={openReport}
+          className="w-full bg-blue-500 text-white rounded-2xl py-3 font-bold shadow text-sm flex items-center justify-center gap-2"
+        >
+          📄 精算サマリーをPDFで保存
+        </button>
 
         {/* 積立不足アラート */}
         {shortfall > 0 && (
