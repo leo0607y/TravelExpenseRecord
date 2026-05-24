@@ -17,7 +17,7 @@ export async function POST(
       if (trip) {
         const { data: group } = await supabase.from("groups").select("approver_id").eq("group_id", trip.group_id).maybeSingle();
         if (group?.approver_id && requesterId !== group.approver_id) {
-          const { data: user } = await supabase.from("users").select("role").eq("user_id", requesterId).maybeSingle();
+          const { data: user } = await supabase.from("users").select("role").eq("user_id", requesterId).eq("group_id", trip.group_id).maybeSingle();
           if (user?.role !== "admin") {
             return NextResponse.json({ error: "承認権限がありません" }, { status: 403 });
           }

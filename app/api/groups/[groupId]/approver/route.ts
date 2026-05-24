@@ -14,6 +14,7 @@ export async function PATCH(
     .from("users")
     .select("role")
     .eq("user_id", requesterId)
+    .eq("group_id", groupId)
     .maybeSingle();
   if (requester?.role !== "admin") {
     return NextResponse.json({ error: "管理者のみ変更できます" }, { status: 403 });
