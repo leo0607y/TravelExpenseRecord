@@ -38,7 +38,9 @@ export async function sendLinePush(to: string, text: string, mention?: LineMenti
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
     body: JSON.stringify({ to, messages: [message] }),
-  }).catch(() => {});
+  }).catch((err) => {
+    console.error("[LINE push failed]", err);
+  });
 }
 
 /** WebhookのreplyToken使って返信 */
@@ -48,5 +50,7 @@ export async function replyLine(replyToken: string, text: string): Promise<void>
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
     body: JSON.stringify({ replyToken, messages: [{ type: "text", text }] }),
-  }).catch(() => {});
+  }).catch((err) => {
+    console.error("[LINE reply failed]", err);
+  });
 }
