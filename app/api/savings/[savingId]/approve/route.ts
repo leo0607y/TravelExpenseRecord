@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
+import { sendLinePush } from "@/lib/line";
 
 export async function POST(
   req: NextRequest,
@@ -34,5 +35,39 @@ export async function POST(
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+
+  // 承認後にLINE通知を送信
+  const saving = data;
+  const { data: trip } = await supabase
+    .from("trips")
+    .select("title, group_id")
+    .eq("trip_id", saving.trip_id)
+    .maybeSingle();
+
+  if (trip) {
+    const [{ data: group }, { data: submitter }] = await Promise.all([
+      supabase.from("groups").select("line_group_id").eq("group_id", trip.group_id).maybeSingle(),
+      supabase.from("users").select("display_name").eq("user_id", saving.user_id).eq("group_id", trip.group_id).maybeSingle(),
+    ]);
+
+    const name = submitter?.display_name ?? "メンバー";
+    const lines = [
+      "✅ 入金が承認されました",
+      "",
+      `旅行：「${trip.title}」`,
+      `申請者：${name}さん`,
+      ...(saving.title ? [`件名：${saving.title}`] : []),
+      `金額：¥${Number(saving.amount).toLocaleString()}`,
+    ];
+    const message = lines.join("\n");
+
+    if (group?.line_group_id) {
+      await sendLinePush(group.line_group_id, message);
+    } else {
+      // グループ未リンクの場合は申請者に個別通知
+      await sendLinePush(saving.user_id, message);
+    }
+  }
+
   return NextResponse.json(data);
 }

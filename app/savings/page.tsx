@@ -12,7 +12,6 @@ export default function SavingsPage() {
   const { activeTrip, currentUser, canApprove } = useLiff();
   const [savings, setSavings] = useState<SavingWithUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [remindedIds, setRemindedIds] = useState<Set<string>>(new Set());
 
   const fetchSavings = useCallback(async () => {
     if (!activeTrip) return;
@@ -41,7 +40,6 @@ export default function SavingsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ requesterId: currentUser?.user_id }),
     });
-    setRemindedIds((prev) => new Set(prev).add(savingId));
   };
 
   if (loading) {
@@ -100,25 +98,22 @@ export default function SavingsPage() {
                       {new Date(s.created_at).toLocaleDateString("ja-JP")} 申請
                     </p>
                   </div>
-                  {canApprove ? (
-                    <div className="flex flex-col gap-1 shrink-0">
-                      <button
-                        onClick={() => remindSaving(s.saving_id)}
-                        disabled={remindedIds.has(s.saving_id)}
-                        className="text-xs bg-orange-400 text-white rounded-full px-3 py-1 disabled:opacity-50"
-                      >
-                        {remindedIds.has(s.saving_id) ? "送信済" : "催促"}
-                      </button>
+                  <div className="flex flex-col gap-1 shrink-0">
+                    <button
+                      onClick={() => remindSaving(s.saving_id)}
+                      className="text-xs bg-orange-400 text-white rounded-full px-3 py-1"
+                    >
+                      催促
+                    </button>
+                    {canApprove && (
                       <button
                         onClick={() => approveSaving(s.saving_id)}
                         className="text-xs bg-brand-green text-white rounded-full px-3 py-1"
                       >
                         承認
                       </button>
-                    </div>
-                  ) : (
-                    <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full shrink-0">確認中</span>
-                  )}
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

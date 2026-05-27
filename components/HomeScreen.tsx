@@ -413,7 +413,6 @@ export default function HomeScreen() {
           <Link
             href="/expense"
             className="flex-[2] text-center bg-brand-green text-white rounded-2xl py-3 text-base font-bold shadow"
-            onClick={reload}
           >
             ＋ 支出を記録する
           </Link>
