@@ -29,8 +29,17 @@ export async function POST(req: NextRequest) {
     ]);
 
     const name = submitter?.display_name ?? "メンバー";
-    const titleLabel = title ? `「${title}」` : "";
-    const message = `💰 入金確認のお知らせ\n\n「${trip.title}」で${name}さんが${titleLabel}¥${Number(amount).toLocaleString()}の積立を申請しました。\n\n入金担当者は確認後、アプリで承認をお願いします🙏`;
+    const lines = [
+      "💰 入金確認のお知らせ",
+      "",
+      `旅行：「${trip.title}」`,
+      `申請者：${name}さん`,
+      ...(title ? [`件名：${title}`] : []),
+      `金額：¥${Number(amount).toLocaleString()}`,
+      "",
+      "確認後、アプリで承認をお願いします🙏",
+    ];
+    const message = lines.join("\n");
 
     if (group?.line_group_id) {
       // グループに送信。入金担当者がいればメンションする

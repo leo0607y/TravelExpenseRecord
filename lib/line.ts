@@ -21,15 +21,17 @@ export async function sendLinePush(to: string, text: string, mention?: LineMenti
 
   if (mention) {
     const tag = `@${mention.displayName}`;
-    message.text = `${tag} ${text}`;
-    message.mentionees = [
-      {
-        index: 0,
-        length: tag.length,
-        type: "user",
-        userId: mention.userId,
-      },
-    ];
+    message.text = `${tag}\n${text}`;
+    message.mention = {
+      mentionees: [
+        {
+          index: 0,
+          length: tag.length,
+          type: "user",
+          userId: mention.userId,
+        },
+      ],
+    };
   }
 
   await fetch(`${LINE_API}/push`, {
