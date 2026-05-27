@@ -47,10 +47,10 @@ export default function HomeScreen() {
   const totalCash = expenses.filter((e) => e.payment_type === "cash").reduce((s, e) => s + e.amount, 0);
 
   const savingStatus = (userId: string) => {
-    const s = savings.find((s) => s.user_id === userId);
-    if (!s) return { label: "未申請", color: "bg-gray-200 text-gray-600" };
-    if (s.status === "approved") return { label: "積立済", color: "bg-green-100 text-green-700" };
-    return { label: "確認中", color: "bg-yellow-100 text-yellow-700" };
+    const userSavings = savings.filter((s) => s.user_id === userId);
+    if (userSavings.length === 0) return { label: "未申請", color: "bg-gray-200 text-gray-600" };
+    if (userSavings.some((s) => s.status === "pending")) return { label: "確認中", color: "bg-yellow-100 text-yellow-700" };
+    return { label: "積立済", color: "bg-green-100 text-green-700" };
   };
 
   const approveSaving = async (savingId: string) => {
@@ -60,6 +60,14 @@ export default function HomeScreen() {
       body: JSON.stringify({ requesterId: currentUser?.user_id }),
     });
     fetchData();
+  };
+
+  const remindSaving = async (savingId: string) => {
+    await fetch(`/api/savings/${savingId}/remind`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requesterId: currentUser?.user_id }),
+    });
   };
 
   const setApprover = async () => {
@@ -189,11 +197,13 @@ export default function HomeScreen() {
 
         {/* メンバー積立ステータス */}
         <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <p className="text-xs text-gray-500 mb-3">👥 メンバー積立状況</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs text-gray-500">👥 メンバー積立状況</p>
+            <Link href="/savings" className="text-xs text-brand-green underline">一覧を見る</Link>
+          </div>
           <div className="grid grid-cols-3 gap-2">
             {members.map((m) => {
               const st = savingStatus(m.user_id);
-              const pendingSaving = savings.find((s) => s.user_id === m.user_id && s.status === "pending");
               return (
                 <div key={m.user_id} className="text-center">
                   {m.picture_url ? (
@@ -205,18 +215,41 @@ export default function HomeScreen() {
                   )}
                   <p className="text-xs mt-1 truncate">{m.display_name}</p>
                   <span className={`text-xs px-2 py-0.5 rounded-full ${st.color}`}>{st.label}</span>
-                  {canApprove && pendingSaving && (
-                    <button
-                      onClick={() => approveSaving(pendingSaving.saving_id)}
-                      className="mt-1 text-xs bg-brand-green text-white rounded-full px-2 py-0.5 block mx-auto"
-                    >
-                      承認
-                    </button>
-                  )}
                 </div>
               );
             })}
           </div>
+
+          {/* 承認待ち積立一覧（入金担当者のみ） */}
+          {canApprove && savings.filter((s) => s.status === "pending").length > 0 && (
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <p className="text-xs text-gray-500 mb-2">⏳ 承認待ちの積立</p>
+              <div className="space-y-2">
+                {savings.filter((s) => s.status === "pending").map((s) => (
+                  <div key={s.saving_id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                    <div className="flex-1 min-w-0 mr-2">
+                      {s.title && <p className="text-sm font-medium text-gray-800 truncate">{s.title}</p>}
+                      <p className="text-xs text-gray-500">{s.user.display_name} ／ ¥{s.amount.toLocaleString()}</p>
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      <button
+                        onClick={() => remindSaving(s.saving_id)}
+                        className="text-xs bg-orange-400 text-white rounded-full px-2 py-1"
+                      >
+                        催促
+                      </button>
+                      <button
+                        onClick={() => approveSaving(s.saving_id)}
+                        className="text-xs bg-brand-green text-white rounded-full px-2 py-1"
+                      >
+                        承認
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* 入金確認担当者 */}
           <div className="mt-3 pt-3 border-t border-gray-100">
@@ -273,8 +306,8 @@ export default function HomeScreen() {
             </div>
           )}
 
-          {/* 自分の積立申請ボタン */}
-          {currentUser && !savings.find((s) => s.user_id === currentUser.user_id) && (
+          {/* 積立申請フォーム（何回でも追加可） */}
+          {currentUser && (
             <SavingForm tripId={trip.trip_id} userId={currentUser.user_id} onDone={fetchData} />
           )}
         </div>
@@ -391,6 +424,7 @@ export default function HomeScreen() {
 }
 
 function SavingForm({ tripId, userId, onDone }: { tripId: string; userId: string; onDone: () => void }) {
+  const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -400,29 +434,40 @@ function SavingForm({ tripId, userId, onDone }: { tripId: string; userId: string
     await fetch("/api/savings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ trip_id: tripId, user_id: userId, amount: Number(amount) }),
+      body: JSON.stringify({ trip_id: tripId, user_id: userId, amount: Number(amount), title: title.trim() || null }),
     });
     setLoading(false);
+    setTitle("");
     setAmount("");
     onDone();
   };
 
   return (
-    <div className="mt-3 flex gap-2">
+    <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
+      <p className="text-xs text-gray-500">＋ 積立を追加申請する</p>
       <input
-        type="number"
-        value={amount}
-        onChange={(e) => setAmount(e.target.value)}
-        placeholder="積立金額（円）"
-        className="flex-1 border rounded-xl px-3 py-2 text-sm"
+        type="text"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="タイトル（例：6月分積立）"
+        className="w-full border rounded-xl px-3 py-2 text-sm"
       />
-      <button
-        onClick={submit}
-        disabled={loading}
-        className="bg-brand-green text-white rounded-xl px-4 text-sm font-bold disabled:opacity-50"
-      >
-        申請
-      </button>
+      <div className="flex gap-2">
+        <input
+          type="number"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          placeholder="積立金額（円）"
+          className="flex-1 border rounded-xl px-3 py-2 text-sm"
+        />
+        <button
+          onClick={submit}
+          disabled={loading}
+          className="bg-brand-green text-white rounded-xl px-4 text-sm font-bold disabled:opacity-50"
+        >
+          申請
+        </button>
+      </div>
     </div>
   );
 }

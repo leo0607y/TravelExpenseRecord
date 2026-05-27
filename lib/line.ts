@@ -4,13 +4,38 @@ function token() {
   return process.env.LINE_CHANNEL_ACCESS_TOKEN ?? "";
 }
 
-/** LINEグループ or ユーザーにプッシュ送信 */
-export async function sendLinePush(to: string, text: string): Promise<void> {
+export interface LineMention {
+  userId: string;
+  displayName: string;
+}
+
+/**
+ * LINEグループ or ユーザーにプッシュ送信。
+ * mention を渡すとテキスト先頭に @displayName を付けて mentionees を設定する。
+ * メンションはグループ送信時のみ有効（個人宛では省略してよい）。
+ */
+export async function sendLinePush(to: string, text: string, mention?: LineMention): Promise<void> {
   if (!token() || !to) return;
+
+  const message: Record<string, unknown> = { type: "text", text };
+
+  if (mention) {
+    const tag = `@${mention.displayName}`;
+    message.text = `${tag} ${text}`;
+    message.mentionees = [
+      {
+        index: 0,
+        length: tag.length,
+        type: "user",
+        userId: mention.userId,
+      },
+    ];
+  }
+
   await fetch(`${LINE_API}/push`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
-    body: JSON.stringify({ to, messages: [{ type: "text", text }] }),
+    body: JSON.stringify({ to, messages: [message] }),
   }).catch(() => {});
 }
 

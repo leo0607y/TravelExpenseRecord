@@ -40,11 +40,13 @@ CREATE TABLE IF NOT EXISTS savings (
   trip_id     UUID NOT NULL REFERENCES trips(trip_id) ON DELETE CASCADE,
   user_id     TEXT NOT NULL REFERENCES users(user_id),
   amount      INTEGER NOT NULL CHECK (amount > 0),
+  title       TEXT,
   status      TEXT NOT NULL DEFAULT 'pending'
                 CHECK (status IN ('pending', 'approved')),
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   approved_at TIMESTAMPTZ
 );
+-- ※ 既存DBへの適用: ALTER TABLE savings ADD COLUMN IF NOT EXISTS title TEXT;
 
 -- Expenses（支出）
 CREATE TABLE IF NOT EXISTS expenses (

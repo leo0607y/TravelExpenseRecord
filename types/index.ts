@@ -34,6 +34,7 @@ export interface Saving {
   trip_id: string;
   user_id: string;
   amount: number;
+  title: string | null;
   status: SavingStatus;
   created_at: string;
   approved_at: string | null;
