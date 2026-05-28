@@ -36,14 +36,6 @@ export default function SavingsPage() {
     fetchSavings();
   };
 
-  const remindSaving = async (savingId: string) => {
-    await fetch(`/api/savings/${savingId}/remind`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requesterId: currentUser?.user_id }),
-    });
-  };
-
   const rejectSaving = async (savingId: string) => {
     await fetch(`/api/savings/${savingId}`, {
       method: "DELETE",
@@ -147,12 +139,6 @@ export default function SavingsPage() {
                     </p>
                   </div>
                   <div className="flex flex-col gap-1 shrink-0">
-                    <button
-                      onClick={() => remindSaving(s.saving_id)}
-                      className="text-xs bg-orange-400 text-white rounded-full px-3 py-1"
-                    >
-                      催促
-                    </button>
                     {canApprove && (
                       <>
                         <button
@@ -221,15 +207,7 @@ export default function SavingsPage() {
                         : new Date(s.created_at).toLocaleDateString("ja-JP")}
                     </p>
                   </div>
-                  <div className="flex flex-col items-end gap-1 shrink-0">
-                    <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">積立済</span>
-                    <button
-                      onClick={() => remindSaving(s.saving_id)}
-                      className="text-xs bg-orange-400 text-white rounded-full px-3 py-1"
-                    >
-                      催促
-                    </button>
-                  </div>
+                  <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full shrink-0">積立済</span>
                 </div>
               ))}
             </div>

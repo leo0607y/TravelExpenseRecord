@@ -4,22 +4,21 @@ import { sendLinePush } from "@/lib/line";
 
 /** POST /api/savings/{savingId}/remind — 入金担当者が申請者に催促を送る */
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ savingId: string }> }
 ) {
   const { savingId } = await params;
+  const { requesterId } = await req.json().catch(() => ({}));
   const supabase = createAdminClient();
 
-  // saving と申請者情報を取得
   const { data: saving } = await supabase
     .from("savings")
-    .select("trip_id, user_id, amount, title, status")
+    .select("trip_id, user_id, amount, title")
     .eq("saving_id", savingId)
     .maybeSingle();
 
   if (!saving) return NextResponse.json({ error: "積立が見つかりません" }, { status: 404 });
 
-  // trip → group を取得
   const { data: trip } = await supabase
     .from("trips")
     .select("title, group_id")
@@ -28,22 +27,28 @@ export async function POST(
 
   if (!trip) return NextResponse.json({ error: "旅行が見つかりません" }, { status: 404 });
 
-  const [{ data: group }, { data: savingUser }] = await Promise.all([
+  const [{ data: group }, { data: savingUser }, { data: approverUser }] = await Promise.all([
     supabase.from("groups").select("line_group_id").eq("group_id", trip.group_id).maybeSingle(),
     supabase.from("users").select("display_name").eq("user_id", saving.user_id).maybeSingle(),
+    supabase.from("users").select("display_name").eq("user_id", requesterId).maybeSingle(),
   ]);
 
-  const titleLabel = saving.title ? `「${saving.title}」` : "";
-  const message = `📣 積立のご確認をお願いします\n\n「${trip.title}」の積立${titleLabel}（¥${Number(saving.amount).toLocaleString()}）について、入金担当者より確認のご連絡です。\n\nまだ入金の確認が取れておりません。お振込み状況をご確認いただけますか？🙏`;
+  const targetName = savingUser?.display_name ?? "メンバー";
+  const approverName = approverUser?.display_name ?? "入金担当者";
+
+  const message = [
+    "📣 積立しなさい！！！",
+    "",
+    `旅行：「${trip.title}」`,
+    "",
+    "入金担当者より確認のご連絡です。今月分は入金しましたか？？？",
+    `By ${approverName}`,
+  ].join("\n");
 
   if (group?.line_group_id) {
-    // グループに送信。申請者をメンションする
-    const mention = savingUser
-      ? { userId: saving.user_id, displayName: savingUser.display_name }
-      : undefined;
+    const mention = savingUser ? { userId: saving.user_id, displayName: targetName } : undefined;
     await sendLinePush(group.line_group_id, message, mention);
   } else {
-    // グループ未リンクの場合は申請者個人へ送信（メンション不要）
     await sendLinePush(saving.user_id, message);
   }
 

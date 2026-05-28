@@ -19,27 +19,25 @@ export async function POST(
 
   if (!trip) return NextResponse.json({ error: "旅行が見つかりません" }, { status: 404 });
 
-  const [{ data: group }, { data: targetUser }, { data: savings }] = await Promise.all([
-    supabase.from("groups").select("line_group_id").eq("group_id", trip.group_id).maybeSingle(),
+  const [{ data: group }, { data: targetUser }, { data: approverUser }] = await Promise.all([
+    supabase.from("groups").select("line_group_id, approver_id").eq("group_id", trip.group_id).maybeSingle(),
     supabase.from("users").select("display_name").eq("user_id", userId).maybeSingle(),
-    supabase.from("savings").select("amount, title").eq("trip_id", tripId).eq("user_id", userId),
+    supabase.from("users").select("display_name").eq("user_id", requesterId).maybeSingle(),
   ]);
 
-  const name = targetUser?.display_name ?? "メンバー";
-  const totalAmount = (savings ?? []).reduce((s, r) => s + Number(r.amount), 0);
+  const targetName = targetUser?.display_name ?? "メンバー";
+  const approverName = approverUser?.display_name ?? "入金担当者";
 
-  const lines = [
-    "📣 積立のご確認をお願いします",
+  const message = [
+    "📣 積立しなさい！！！",
     "",
     `旅行：「${trip.title}」`,
-    `対象：${name}さん`,
-    ...(totalAmount > 0 ? [`申請金額合計：¥${totalAmount.toLocaleString()}`] : []),
     "",
-    "入金担当者より確認のご連絡です。お振込み状況をご確認いただけますか？🙏",
-  ];
-  const message = lines.join("\n");
+    "入金担当者より確認のご連絡です。今月分は入金しましたか？？？",
+    `By ${approverName}`,
+  ].join("\n");
 
-  const mention = targetUser ? { userId, displayName: name } : undefined;
+  const mention = targetUser ? { userId, displayName: targetName } : undefined;
 
   if (group?.line_group_id) {
     await sendLinePush(group.line_group_id, message, mention);
