@@ -55,13 +55,13 @@ export async function GET(req: NextRequest) {
     const expenseLines = todayExpenses
       .map((e) => {
         const bens = e.beneficiaryNames.join(", ");
-        const imgMark = e.image_url ? " 📸" : "";
+        const imgMark = e.image_url ? " [写真]" : "";
         const payType = e.payment_type === "card" ? "共通カード" : "現金立替";
         return `【${e.title}${imgMark}】\n  ¥${e.amount.toLocaleString()}（${e.payerName}・${payType} / 受益：${bens}）${e.memo ? `\n  メモ：「${e.memo}」` : ""}`;
       })
       .join("\n\n");
 
-    const message = `📋 【Tabi-Pay 本日の支出まとめ】\n\n💸 本日の支出総額：¥${totalToday.toLocaleString()}\n\n${expenseLines}\n\n━━━━━━━━━━━━━━━━\n💳 口座プール残高：¥${poolBalance.toLocaleString()}\n━━━━━━━━━━━━━━━━\n今日も一日お疲れ様でした！`;
+    const message = `【本日の支出まとめ】\n\n合計：¥${totalToday.toLocaleString()}\n\n${expenseLines}\n\n━━━━━━━━━━━━━━━━\nプール残高：¥${poolBalance.toLocaleString()}\n━━━━━━━━━━━━━━━━\n今日もお疲れ様でした！`;
 
     if (group?.line_group_id) {
       // LINEグループに1通送信
