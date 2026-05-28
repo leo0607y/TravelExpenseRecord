@@ -70,6 +70,15 @@ export default function HomeScreen() {
     });
   };
 
+  const rejectSaving = async (savingId: string) => {
+    await fetch(`/api/savings/${savingId}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requesterId: currentUser?.user_id }),
+    });
+    fetchData();
+  };
+
   const remindUser = async (userId: string) => {
     if (!currentUser) return;
     await fetch(`/api/trips/${trip.trip_id}/savings/remind-user`, {
@@ -252,6 +261,12 @@ export default function HomeScreen() {
                         className="text-xs bg-orange-400 text-white rounded-full px-2 py-1"
                       >
                         催促
+                      </button>
+                      <button
+                        onClick={() => rejectSaving(s.saving_id)}
+                        className="text-xs bg-red-400 text-white rounded-full px-2 py-1"
+                      >
+                        棄却
                       </button>
                       <button
                         onClick={() => approveSaving(s.saving_id)}
@@ -443,7 +458,7 @@ function SavingForm({ tripId, userId, onDone }: { tripId: string; userId: string
   const [loading, setLoading] = useState(false);
 
   const submit = async () => {
-    if (!amount || Number(amount) <= 0) return;
+    if (!title.trim() || !amount || Number(amount) <= 0) return;
     setLoading(true);
     await fetch("/api/savings", {
       method: "POST",
@@ -463,8 +478,8 @@ function SavingForm({ tripId, userId, onDone }: { tripId: string; userId: string
         type="text"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        placeholder="タイトル（例：6月分積立）"
-        className="w-full border rounded-xl px-3 py-2 text-sm"
+        placeholder="タイトル（必須）"
+        className={`w-full border rounded-xl px-3 py-2 text-sm ${!title.trim() ? "border-red-300" : ""}`}
       />
       <div className="flex gap-2">
         <input

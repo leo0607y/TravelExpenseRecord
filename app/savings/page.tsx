@@ -44,6 +44,15 @@ export default function SavingsPage() {
     });
   };
 
+  const rejectSaving = async (savingId: string) => {
+    await fetch(`/api/savings/${savingId}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requesterId: currentUser?.user_id }),
+    });
+    fetchSavings();
+  };
+
   const startEditTitle = (s: SavingWithUser) => {
     setEditingSavingId(s.saving_id);
     setEditingTitle(s.title ?? "");
@@ -145,12 +154,20 @@ export default function SavingsPage() {
                       催促
                     </button>
                     {canApprove && (
-                      <button
-                        onClick={() => approveSaving(s.saving_id)}
-                        className="text-xs bg-brand-green text-white rounded-full px-3 py-1"
-                      >
-                        承認
-                      </button>
+                      <>
+                        <button
+                          onClick={() => rejectSaving(s.saving_id)}
+                          className="text-xs bg-red-400 text-white rounded-full px-3 py-1"
+                        >
+                          棄却
+                        </button>
+                        <button
+                          onClick={() => approveSaving(s.saving_id)}
+                          className="text-xs bg-brand-green text-white rounded-full px-3 py-1"
+                        >
+                          承認
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
