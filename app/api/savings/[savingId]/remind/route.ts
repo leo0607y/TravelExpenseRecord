@@ -18,7 +18,6 @@ export async function POST(
     .maybeSingle();
 
   if (!saving) return NextResponse.json({ error: "積立が見つかりません" }, { status: 404 });
-  if (saving.status !== "pending") return NextResponse.json({ error: "既に承認済みです" }, { status: 400 });
 
   // trip → group を取得
   const { data: trip } = await supabase

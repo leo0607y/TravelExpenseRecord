@@ -256,6 +256,12 @@ export default function SavingsPage() {
                   </div>
                   <div className="flex flex-col items-end gap-1 shrink-0">
                     <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">積立済</span>
+                    <button
+                      onClick={() => remindSaving(s.saving_id)}
+                      className="text-xs bg-orange-400 text-white rounded-full px-3 py-1"
+                    >
+                      催促
+                    </button>
                     {isAdmin && (
                       <button
                         onClick={() => unapproveSaving(s.saving_id)}
