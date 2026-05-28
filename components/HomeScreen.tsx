@@ -62,31 +62,20 @@ export default function HomeScreen() {
     fetchData();
   };
 
-  const unapproveMember = async (userId: string) => {
-    if (!currentUser) return;
-    await fetch(`/api/trips/${trip.trip_id}/savings/unapprove-user`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requesterId: currentUser.user_id, userId }),
-    });
-    fetchData();
-  };
-
-  const unapproveAll = async () => {
-    if (!currentUser) return;
-    await fetch(`/api/trips/${trip.trip_id}/savings/unapprove-all`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requesterId: currentUser.user_id }),
-    });
-    fetchData();
-  };
-
   const remindSaving = async (savingId: string) => {
     await fetch(`/api/savings/${savingId}/remind`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ requesterId: currentUser?.user_id }),
+    });
+  };
+
+  const remindUser = async (userId: string) => {
+    if (!currentUser) return;
+    await fetch(`/api/trips/${trip.trip_id}/savings/remind-user`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requesterId: currentUser.user_id, userId }),
     });
   };
 
@@ -219,17 +208,7 @@ export default function HomeScreen() {
         <div className="bg-white rounded-2xl p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs text-gray-500">👥 メンバー積立状況</p>
-            <div className="flex items-center gap-3">
-              {isAdmin && approvedSavings.length > 0 && (
-                <button
-                  onClick={unapproveAll}
-                  className="text-xs text-red-400 underline"
-                >
-                  全員を戻す
-                </button>
-              )}
-              <Link href="/savings" className="text-xs text-brand-green underline">一覧を見る</Link>
-            </div>
+            <Link href="/savings" className="text-xs text-brand-green underline">一覧を見る</Link>
           </div>
           <div className="grid grid-cols-3 gap-2">
             {members.map((m) => {
@@ -245,14 +224,12 @@ export default function HomeScreen() {
                   )}
                   <p className="text-xs mt-1 truncate">{m.display_name}</p>
                   <span className={`text-xs px-2 py-0.5 rounded-full ${st.color}`}>{st.label}</span>
-                  {isAdmin && st.label === "積立済" && (
-                    <button
-                      onClick={() => unapproveMember(m.user_id)}
-                      className="block mx-auto text-xs text-red-400 underline mt-0.5"
-                    >
-                      戻す
-                    </button>
-                  )}
+                  <button
+                    onClick={() => remindUser(m.user_id)}
+                    className="mt-1 text-xs bg-orange-400 text-white rounded-full px-2 py-0.5"
+                  >
+                    催促
+                  </button>
                 </div>
               );
             })}

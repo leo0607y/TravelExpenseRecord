@@ -9,12 +9,11 @@ import type { Saving } from "@/types";
 type SavingWithUser = Saving & { user: { display_name: string; picture_url: string | null } };
 
 export default function SavingsPage() {
-  const { activeTrip, currentUser, isAdmin, canApprove } = useLiff();
+  const { activeTrip, currentUser, canApprove } = useLiff();
   const [savings, setSavings] = useState<SavingWithUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingSavingId, setEditingSavingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
-  const [confirmUnapproveAll, setConfirmUnapproveAll] = useState(false);
 
   const fetchSavings = useCallback(async () => {
     if (!activeTrip) return;
@@ -58,27 +57,6 @@ export default function SavingsPage() {
       body: JSON.stringify({ title: editingTitle, requesterId: currentUser.user_id }),
     });
     setEditingSavingId(null);
-    fetchSavings();
-  };
-
-  const unapproveSaving = async (savingId: string) => {
-    if (!currentUser) return;
-    await fetch(`/api/savings/${savingId}/unapprove`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requesterId: currentUser.user_id }),
-    });
-    fetchSavings();
-  };
-
-  const unapproveAll = async () => {
-    if (!currentUser || !activeTrip) return;
-    await fetch(`/api/trips/${activeTrip.trip_id}/savings/unapprove-all`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requesterId: currentUser.user_id }),
-    });
-    setConfirmUnapproveAll(false);
     fetchSavings();
   };
 
@@ -184,35 +162,7 @@ export default function SavingsPage() {
         {/* 承認済み */}
         {approvedSavings.length > 0 && (
           <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs text-gray-500">✅ 積立済み</p>
-              {isAdmin && (
-                confirmUnapproveAll ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500">全員を戻す？</span>
-                    <button
-                      onClick={unapproveAll}
-                      className="text-xs bg-red-500 text-white rounded-full px-3 py-1"
-                    >
-                      はい
-                    </button>
-                    <button
-                      onClick={() => setConfirmUnapproveAll(false)}
-                      className="text-xs text-gray-400"
-                    >
-                      取消
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setConfirmUnapproveAll(true)}
-                    className="text-xs text-red-500 underline"
-                  >
-                    全員を戻す
-                  </button>
-                )
-              )}
-            </div>
+            <p className="text-xs text-gray-500 mb-3">✅ 積立済み</p>
             <div className="space-y-3">
               {approvedSavings.map((s) => (
                 <div key={s.saving_id} className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0">
@@ -262,14 +212,6 @@ export default function SavingsPage() {
                     >
                       催促
                     </button>
-                    {isAdmin && (
-                      <button
-                        onClick={() => unapproveSaving(s.saving_id)}
-                        className="text-xs text-red-400 underline"
-                      >
-                        戻す
-                      </button>
-                    )}
                   </div>
                 </div>
               ))}
