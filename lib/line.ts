@@ -11,7 +11,7 @@ export interface LineMention {
 
 /**
  * LINEグループ or ユーザーにプッシュ送信。
- * mention を渡すとテキスト先頭に @displayName を付けて mentionees を設定する。
+ * mention を渡すとテキスト先頭に <m userId="..."> タグを埋め込みメンションとして送信する。
  * メンションはグループ送信時のみ有効（個人宛では省略してよい）。
  */
 export async function sendLinePush(to: string, text: string, mention?: LineMention): Promise<void> {
@@ -20,27 +20,23 @@ export async function sendLinePush(to: string, text: string, mention?: LineMenti
   const message: Record<string, unknown> = { type: "text", text };
 
   if (mention) {
-    const tag = `@${mention.displayName}`;
-    message.text = `${tag}\n${text}`;
-    message.mention = {
-      mentionees: [
-        {
-          index: 0,
-          length: tag.length,
-          type: "user",
-          userId: mention.userId,
-        },
-      ],
-    };
+    // <m userId="..."> タグをテキストに埋め込むことでLINEがメンションとして解釈する
+    message.text = `<m userId="${mention.userId}">\n${text}`;
   }
 
-  await fetch(`${LINE_API}/push`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
-    body: JSON.stringify({ to, messages: [message] }),
-  }).catch((err) => {
+  try {
+    const res = await fetch(`${LINE_API}/push`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
+      body: JSON.stringify({ to, messages: [message] }),
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.error(`[LINE push error] status=${res.status} body=${body}`);
+    }
+  } catch (err) {
     console.error("[LINE push failed]", err);
-  });
+  }
 }
 
 /** WebhookのreplyToken使って返信 */

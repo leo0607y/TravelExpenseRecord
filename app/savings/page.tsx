@@ -12,6 +12,8 @@ export default function SavingsPage() {
   const { activeTrip, currentUser, canApprove } = useLiff();
   const [savings, setSavings] = useState<SavingWithUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingSavingId, setEditingSavingId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
 
   const fetchSavings = useCallback(async () => {
     if (!activeTrip) return;
@@ -40,6 +42,22 @@ export default function SavingsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ requesterId: currentUser?.user_id }),
     });
+  };
+
+  const startEditTitle = (s: SavingWithUser) => {
+    setEditingSavingId(s.saving_id);
+    setEditingTitle(s.title ?? "");
+  };
+
+  const saveTitle = async (savingId: string) => {
+    if (!currentUser) return;
+    await fetch(`/api/savings/${savingId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: editingTitle, requesterId: currentUser.user_id }),
+    });
+    setEditingSavingId(null);
+    fetchSavings();
   };
 
   if (loading) {
@@ -91,7 +109,28 @@ export default function SavingsPage() {
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    {s.title && <p className="text-sm font-medium text-gray-800 truncate">{s.title}</p>}
+                    {editingSavingId === s.saving_id ? (
+                      <div className="flex items-center gap-1 mb-1">
+                        <input
+                          type="text"
+                          value={editingTitle}
+                          onChange={(e) => setEditingTitle(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && saveTitle(s.saving_id)}
+                          className="flex-1 border rounded-lg px-2 py-0.5 text-sm min-w-0"
+                          autoFocus
+                          placeholder="タイトル"
+                        />
+                        <button onClick={() => saveTitle(s.saving_id)} className="text-xs bg-brand-green text-white rounded-lg px-2 py-0.5 whitespace-nowrap">保存</button>
+                        <button onClick={() => setEditingSavingId(null)} className="text-xs text-gray-400 whitespace-nowrap">取消</button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1">
+                        {s.title && <p className="text-sm font-medium text-gray-800 truncate">{s.title}</p>}
+                        {s.user_id === currentUser?.user_id && (
+                          <button onClick={() => startEditTitle(s)} className="text-gray-400 text-xs leading-none shrink-0">✏️</button>
+                        )}
+                      </div>
+                    )}
                     <p className="text-xs text-gray-500">{s.user.display_name}</p>
                     <p className="text-sm font-bold text-gray-800">¥{s.amount.toLocaleString()}</p>
                     <p className="text-xs text-gray-400">
@@ -135,7 +174,28 @@ export default function SavingsPage() {
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    {s.title && <p className="text-sm font-medium text-gray-800 truncate">{s.title}</p>}
+                    {editingSavingId === s.saving_id ? (
+                      <div className="flex items-center gap-1 mb-1">
+                        <input
+                          type="text"
+                          value={editingTitle}
+                          onChange={(e) => setEditingTitle(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && saveTitle(s.saving_id)}
+                          className="flex-1 border rounded-lg px-2 py-0.5 text-sm min-w-0"
+                          autoFocus
+                          placeholder="タイトル"
+                        />
+                        <button onClick={() => saveTitle(s.saving_id)} className="text-xs bg-brand-green text-white rounded-lg px-2 py-0.5 whitespace-nowrap">保存</button>
+                        <button onClick={() => setEditingSavingId(null)} className="text-xs text-gray-400 whitespace-nowrap">取消</button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1">
+                        {s.title && <p className="text-sm font-medium text-gray-800 truncate">{s.title}</p>}
+                        {s.user_id === currentUser?.user_id && (
+                          <button onClick={() => startEditTitle(s)} className="text-gray-400 text-xs leading-none shrink-0">✏️</button>
+                        )}
+                      </div>
+                    )}
                     <p className="text-xs text-gray-500">{s.user.display_name}</p>
                     <p className="text-sm font-bold text-gray-800">¥{s.amount.toLocaleString()}</p>
                     <p className="text-xs text-gray-400">
