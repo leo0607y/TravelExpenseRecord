@@ -52,12 +52,22 @@ export async function GET(req: NextRequest) {
   const fmtDate = (s: string) => s.slice(0, 10);
 
   const savingsRows = ((members as User[]) ?? []).map((m) => {
-    const s = approvedSavings.find((sv) => sv.user_id === m.user_id);
-    return `<tr>
-      <td>${m.display_name}</td>
-      <td class="num">${s ? fmtYen(s.amount) : "—"}</td>
-      <td class="center">${s ? "✅ 承認済" : "未積立"}</td>
-    </tr>`;
+    const memberSavings = approvedSavings.filter((sv) => sv.user_id === m.user_id);
+    const memberTotal = memberSavings.reduce((sum, sv) => sum + sv.amount, 0);
+    if (memberSavings.length === 0) {
+      return `<tr>
+        <td>${m.display_name}</td>
+        <td>—</td>
+        <td class="num">—</td>
+        <td class="center">未積立</td>
+      </tr>`;
+    }
+    return memberSavings.map((sv, i) => `<tr>
+      <td>${i === 0 ? m.display_name : ""}</td>
+      <td>${sv.title ?? "（タイトルなし）"}</td>
+      <td class="num">${fmtYen(sv.amount)}</td>
+      <td class="center">${i === memberSavings.length - 1 && memberSavings.length > 1 ? `合計 ${fmtYen(memberTotal)}` : "✅"}</td>
+    </tr>`).join("");
   }).join("");
 
   const totalApproved = approvedSavings.reduce((s, r) => s + r.amount, 0);
@@ -72,7 +82,7 @@ export async function GET(req: NextRequest) {
       <div class="expense-header">
         <div>
           <div class="expense-title">${e.title}</div>
-          <div class="expense-meta">${fmtDate(e.paid_at)} ／ ${payerName} ／ ${e.payment_type === "card" ? "💳 カード" : "💴 現金"}</div>
+          <div class="expense-meta">${fmtDate(e.paid_at)} ／ ${payerName} ／ ${e.payment_type === "card" ? "💳 共通カード" : "💴 立替"}</div>
           <div class="expense-meta">受益者：${bens}</div>
           ${e.memo ? `<div class="expense-memo">📝 ${e.memo}</div>` : ""}
         </div>
@@ -164,7 +174,7 @@ export async function GET(req: NextRequest) {
         <div class="value">${fmtYen(summary.total_card)}</div>
       </div>
       <div class="summary-cell">
-        <div class="label">💴 現金</div>
+        <div class="label">💴 立替</div>
         <div class="value">${fmtYen(summary.total_cash)}</div>
       </div>
     </div>
@@ -189,7 +199,7 @@ export async function GET(req: NextRequest) {
   <div class="section">
     <div class="section-title">積み立て状況</div>
     <table>
-      <thead><tr><th>名前</th><th>積立額</th><th>状態</th></tr></thead>
+      <thead><tr><th>名前</th><th>件名</th><th>金額</th><th>状態</th></tr></thead>
       <tbody>${savingsRows}</tbody>
     </table>
   </div>
