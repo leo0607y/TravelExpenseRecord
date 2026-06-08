@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { calcTripSummary } from "@/lib/settlement";
-import type { Expense, Saving, User } from "@/types";
+import { sendLinePush } from "@/lib/line";
+import type { Expense, Saving, User, TripSummary } from "@/types";
 
 /** GET /api/settle?tripId=xxx — 精算サマリーを計算して返す */
 export async function GET(req: NextRequest) {
@@ -93,5 +94,50 @@ export async function POST(req: NextRequest) {
     .select()
     .single();
 
+  // LINE通知
+  const { data: group } = await supabase
+    .from("groups")
+    .select("line_group_id")
+    .eq("group_id", trip.group_id)
+    .single();
+
+  if (group?.line_group_id) {
+    await sendSettlementNotification(group.line_group_id, trip.trip_id, trip.title, summary);
+  }
+
   return NextResponse.json({ summary, newTrip });
+}
+
+async function sendSettlementNotification(
+  lineGroupId: string,
+  tripId: string,
+  tripTitle: string,
+  summary: TripSummary
+) {
+  const fmtYen = (n: number) => `¥${Math.round(n).toLocaleString("ja-JP")}`;
+
+  const routeLines = summary.settlement_routes.length === 0
+    ? "  送金不要！全員釣り合っています 🎉"
+    : summary.settlement_routes.map((r) => `  ${r.from_name} → ${r.to_name}  ${fmtYen(r.amount)}`).join("\n");
+
+  const summaryText = [
+    `🏁「${tripTitle}」の精算が完了しました！`,
+    "",
+    `💰 総支出：${fmtYen(summary.total_expenses)}`,
+    `  💳 共通カード ${fmtYen(summary.total_card)}`,
+    `  💴 立替 ${fmtYen(summary.total_cash)}`,
+    "",
+    "💸 返金まとめ",
+    routeLines,
+  ].join("\n");
+
+  await sendLinePush(lineGroupId, summaryText);
+
+  const appUrl = process.env.APP_URL
+    ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null);
+
+  if (appUrl) {
+    const reportUrl = `${appUrl}/api/report?tripId=${tripId}`;
+    await sendLinePush(lineGroupId, `📄 精算レポート（PDF）\n${reportUrl}`);
+  }
 }

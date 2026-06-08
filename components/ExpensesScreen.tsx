@@ -71,7 +71,7 @@ export default function ExpensesScreen() {
           </div>
           <div className="w-px bg-gray-100" />
           <div>
-            <p className="text-xs text-gray-400">💴 現金</p>
+            <p className="text-xs text-gray-400">💴 立替</p>
             <p className="text-lg font-bold text-gray-700">¥{totalCash.toLocaleString()}</p>
           </div>
         </div>
@@ -126,7 +126,7 @@ export default function ExpensesScreen() {
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-gray-800">{e.title}</p>
                   <p className="text-xs text-gray-400 mt-0.5">
-                    {e.paid_at} ／ {e.payer.display_name} ／ {e.payment_type === "card" ? "💳 カード" : "💴 現金"}
+                    {e.paid_at} ／ {e.payer.display_name} ／ {e.payment_type === "card" ? "💳 共通カード" : "💴 立替"}
                   </p>
                   <p className="text-xs text-gray-400 mt-0.5">
                     受益者：{e.beneficiaries.map((b) => b.display_name).join("・")}

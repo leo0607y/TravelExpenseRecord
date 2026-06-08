@@ -106,7 +106,7 @@ export default function SettleScreen() {
             ¥{summary.total_expenses.toLocaleString()}
           </p>
           <p className="text-sm text-gray-400 mt-1">
-            💳 ¥{summary.total_card.toLocaleString()} ／ 💴 ¥{summary.total_cash.toLocaleString()}
+            💳 共通カード ¥{summary.total_card.toLocaleString()} ／ 💴 立替 ¥{summary.total_cash.toLocaleString()}
           </p>
           <p className={`text-xs mt-2 font-bold ${summary.pool_balance < 0 ? "text-red-500" : "text-blue-500"}`}>
             プール残高：¥{summary.pool_balance.toLocaleString()}

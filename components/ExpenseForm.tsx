@@ -160,7 +160,7 @@ export default function ExpenseForm() {
                       : "border-gray-200 text-gray-500"
                   }`}
                 >
-                  {t === "card" ? "💳 共通カード" : "💴 現金立替"}
+                  {t === "card" ? "💳 共通カード" : "💴 立替"}
                 </button>
               ))}
             </div>

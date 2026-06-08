@@ -187,7 +187,7 @@ export default function HomeScreen() {
           <p className="text-xs text-gray-500">🎉 ワクワク総支出</p>
           <p className="text-3xl font-bold text-gray-800 mt-1">¥{totalExpenses.toLocaleString()}</p>
           <p className="text-sm text-gray-500 mt-1">
-            💳 カード ¥{totalCard.toLocaleString()} ／ 💴 現金 ¥{totalCash.toLocaleString()}
+            💳 共通カード ¥{totalCard.toLocaleString()} ／ 💴 立替 ¥{totalCash.toLocaleString()}
           </p>
         </div>
 
