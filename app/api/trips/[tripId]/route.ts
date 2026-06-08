@@ -19,7 +19,7 @@ export async function GET(
 
   const [{ data: savingsRaw }, { data: expensesRaw }, { data: users }] = await Promise.all([
     supabase.from("savings").select("*").eq("trip_id", tripId).order("created_at", { ascending: false }),
-    supabase.from("expenses").select("*").eq("trip_id", tripId).order("paid_at", { ascending: false }),
+    supabase.from("expenses").select("*").eq("trip_id", tripId).order("created_at", { ascending: true }),
     supabase.from("users").select("*").eq("group_id", trip.group_id),
   ]);
 

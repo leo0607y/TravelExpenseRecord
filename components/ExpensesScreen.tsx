@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useLiff } from "./LiffProvider";
-import type { Expense } from "@/types";
+import type { Expense, SettlementRoute } from "@/types";
 
 type ExpenseWithDetails = Expense & {
   payer: { display_name: string };
@@ -14,16 +14,24 @@ export default function ExpensesScreen() {
   const router = useRouter();
   const { activeTrip } = useLiff();
   const [expenses, setExpenses] = useState<ExpenseWithDetails[]>([]);
+  const [settlementRoutes, setSettlementRoutes] = useState<SettlementRoute[]>([]);
   const [loading, setLoading] = useState(true);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
   const fetchExpenses = useCallback(async () => {
     if (!activeTrip) return;
     setLoading(true);
-    const res = await fetch(`/api/trips/${activeTrip.trip_id}`);
-    if (res.ok) {
-      const data = await res.json();
+    const [tripRes, settleRes] = await Promise.all([
+      fetch(`/api/trips/${activeTrip.trip_id}`),
+      fetch(`/api/settle?tripId=${activeTrip.trip_id}`),
+    ]);
+    if (tripRes.ok) {
+      const data = await tripRes.json();
       setExpenses(data.expenses ?? []);
+    }
+    if (settleRes.ok) {
+      const summary = await settleRes.json();
+      setSettlementRoutes(summary.settlement_routes ?? []);
     }
     setLoading(false);
   }, [activeTrip]);
@@ -67,6 +75,27 @@ export default function ExpensesScreen() {
             <p className="text-lg font-bold text-gray-700">¥{totalCash.toLocaleString()}</p>
           </div>
         </div>
+      </div>
+
+      {/* 精算サマリー */}
+      <div className="mx-4 mt-4 bg-white rounded-2xl p-4 shadow-sm">
+        <p className="text-xs font-bold text-gray-500 mb-2">💸 返金まとめ（現時点）</p>
+        {settlementRoutes.length === 0 ? (
+          <p className="text-xs text-gray-400 text-center py-1">精算不要です 🎉</p>
+        ) : (
+          <div className="space-y-2">
+            {settlementRoutes.map((r, i) => (
+              <div key={i} className="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2">
+                <span className="text-sm text-gray-700">
+                  <span className="font-bold text-red-500">{r.from_name}</span>
+                  <span className="mx-1 text-gray-400">→</span>
+                  <span className="font-bold text-brand-green">{r.to_name}</span>
+                </span>
+                <span className="text-sm font-black text-gray-800">¥{r.amount.toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* 支出カード一覧 */}
