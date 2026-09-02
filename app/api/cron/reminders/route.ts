@@ -5,7 +5,7 @@ import { sendLinePush } from "@/lib/line";
 /**
  * GET /api/cron/reminders
  * 送信予定時刻を過ぎた未送信のリマインダーをLINEへ送る。
- * Upstash QStashから1分おきに呼び出される
+ * Upstash QStashから3分おきに呼び出される（無料枠1,000件/日に収まる頻度）
  * （.github/workflows/cron-jobs.ymlのschedule実行はバックアップ用）。
  */
 export async function GET(req: NextRequest) {
