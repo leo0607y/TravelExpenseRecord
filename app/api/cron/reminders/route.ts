@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
   let sent = 0;
   for (const reminder of dueReminders) {
     const group = groupMap[reminder.group_id];
-    const message = `🔔 リマインド\n\n${reminder.message}`;
+    const message = reminder.message;
 
     if (group?.line_group_id) {
       await sendLinePush(group.line_group_id, message);

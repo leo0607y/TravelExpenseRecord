@@ -3,7 +3,7 @@
 export const ACTIVE_THEME: "default" | "guam" = "guam";
 
 const GUAM_GREETING = "🌺 ハファデイ！";
-const GUAM_SIGNOFF = "🌴 Si Yu'os Ma'åse'（グアムの言葉で「ありがとう」）";
+const GUAM_SIGNOFF = "🌴 Si Yu'os Ma'åse'";
 
 // テーマがグアムの間、LINEへの送信テキストに南国の挨拶を添える
 export function themeLineMessage(text: string): string {
