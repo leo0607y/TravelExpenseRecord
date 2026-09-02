@@ -70,7 +70,7 @@ export default function SavingsPage() {
   const pendingCount = allSavings.filter((s) => s.status === "pending").length;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-8">
+    <div className="min-h-screen pb-8">
       {/* ヘッダー */}
       <div className="bg-brand-green text-white px-4 py-4">
         <div className="flex items-center gap-3">
@@ -78,7 +78,8 @@ export default function SavingsPage() {
           <h1 className="text-lg font-bold">積立一覧</h1>
         </div>
         <p className="text-xs opacity-70 mt-1">全旅行の積立履歴</p>
-        <ThemeAccentStrip count={9} start={12} className="mt-3 opacity-45" itemClassName="w-7 h-7" />
+        <ThemeAccentStrip count={10} start={12} className="mt-3 opacity-50" itemClassName="w-7 h-7" />
+        <ThemeAccentStrip count={12} start={22} className="mt-1.5 opacity-35" itemClassName="w-6 h-6" />
       </div>
 
       <div className="p-4 space-y-4">

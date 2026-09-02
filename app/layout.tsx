@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import LiffProvider from "@/components/LiffProvider";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
+import ThemeBackdrop from "@/components/ThemeBackdrop";
 import { getServerTheme, isFreeChoiceEnabled } from "@/lib/theme";
 import { ThemeProvider } from "@/lib/theme-context";
 
@@ -27,7 +28,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ja" data-theme={serverTheme !== "default" ? serverTheme : undefined}>
       <body className="bg-gray-50 max-w-md mx-auto">
         <ThemeProvider serverTheme={serverTheme} freeChoiceEnabled={freeChoiceEnabled}>
-          <LiffProvider>{children}</LiffProvider>
+          <ThemeBackdrop />
+          <div className="relative z-10">
+            <LiffProvider>{children}</LiffProvider>
+          </div>
           <ThemeSwitcher />
         </ThemeProvider>
       </body>

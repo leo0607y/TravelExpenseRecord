@@ -142,7 +142,7 @@ export default function HomeScreen() {
   const currentApproverName = members.find((m) => m.user_id === group?.approver_id)?.display_name ?? "未設定";
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen pb-24">
       {/* ヘッダー */}
       <div className="bg-brand-green text-white px-4 py-4">
         <div className="flex items-center justify-between">
@@ -187,7 +187,8 @@ export default function HomeScreen() {
             </button>
           </div>
         </div>
-        <ThemeAccentStrip count={9} start={0} className="mt-3 opacity-45" itemClassName="w-7 h-7" />
+        <ThemeAccentStrip count={10} start={0} className="mt-3 opacity-50" itemClassName="w-7 h-7" />
+        <ThemeAccentStrip count={12} start={10} className="mt-1.5 opacity-35" itemClassName="w-6 h-6" />
       </div>
 
       <div className="p-4 space-y-4">
@@ -242,6 +243,8 @@ export default function HomeScreen() {
             </div>
           )}
         </div>
+
+        <ThemeAccentStrip count={12} start={14} className="opacity-70" itemClassName="w-6 h-6" />
 
         {/* メンバー積立ステータス */}
         <div className="bg-white rounded-2xl p-4 shadow-sm relative overflow-hidden">
@@ -380,6 +383,8 @@ export default function HomeScreen() {
           )}
         </div>
 
+        <ThemeAccentStrip count={12} start={26} className="opacity-70" itemClassName="w-6 h-6" />
+
         {/* 支出履歴 */}
         <div className="bg-white rounded-2xl p-4 shadow-sm relative overflow-hidden">
           <ThemeAccent index={8} className="absolute -right-2 -top-2 w-12 h-12 opacity-15 pointer-events-none" />
@@ -480,8 +485,9 @@ export default function HomeScreen() {
       </div>
 
       {/* 固定フッター */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t">
-        <div className="flex gap-2 p-3">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t max-w-md mx-auto">
+        <ThemeAccentStrip count={12} start={7} className="px-3 pt-1.5 opacity-60" itemClassName="w-5 h-5" />
+        <div className="flex gap-2 px-3 pb-3 pt-1">
           <Link
             href="/expenses"
             className="flex-1 text-center bg-gray-100 text-gray-700 rounded-2xl py-3 text-sm font-bold"

@@ -71,7 +71,7 @@ export default function ExpensesScreen() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-8">
+    <div className="min-h-screen pb-8">
       {/* ヘッダー */}
       <div className="bg-brand-green text-white px-4 py-4">
         <div className="flex items-center gap-3">
@@ -81,7 +81,8 @@ export default function ExpensesScreen() {
             {activeTrip && <p className="text-xs opacity-80">{activeTrip.title}</p>}
           </div>
         </div>
-        <ThemeAccentStrip count={9} start={3} className="mt-3 opacity-45" itemClassName="w-7 h-7" />
+        <ThemeAccentStrip count={10} start={3} className="mt-3 opacity-50" itemClassName="w-7 h-7" />
+        <ThemeAccentStrip count={12} start={13} className="mt-1.5 opacity-35" itemClassName="w-6 h-6" />
       </div>
 
       {/* 合計サマリー */}

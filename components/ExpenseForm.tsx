@@ -90,7 +90,7 @@ export default function ExpenseForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen pb-24">
       {/* ヘッダー */}
       <div className="bg-brand-green text-white px-4 py-4 flex items-center gap-3">
         <button onClick={() => router.back()} className="text-white">←</button>

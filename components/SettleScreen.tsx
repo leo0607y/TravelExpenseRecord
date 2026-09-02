@@ -97,14 +97,15 @@ export default function SettleScreen() {
   const shortfall = summary.pool_balance < 0 ? Math.abs(Math.round(summary.pool_balance)) : 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen pb-24">
       {/* ヘッダー */}
       <div className="bg-red-500 text-white px-4 py-4">
         <div className="flex items-center gap-3">
           <button onClick={() => router.back()} className="text-white">←</button>
           <h1 className="text-lg font-bold">🏁 旅行を締める・精算</h1>
         </div>
-        <ThemeAccentStrip count={9} start={5} className="mt-3 opacity-45" itemClassName="w-7 h-7" />
+        <ThemeAccentStrip count={10} start={5} className="mt-3 opacity-50" itemClassName="w-7 h-7" />
+        <ThemeAccentStrip count={12} start={15} className="mt-1.5 opacity-35" itemClassName="w-6 h-6" />
       </div>
 
       <div className="p-4 space-y-4">
