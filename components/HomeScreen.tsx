@@ -243,8 +243,6 @@ export default function HomeScreen() {
           )}
         </div>
 
-        <ThemeAccentStrip count={12} start={14} className="opacity-70" itemClassName="w-6 h-6" />
-
         {/* メンバー積立ステータス */}
         <div className="bg-white rounded-2xl p-4 shadow-sm relative overflow-hidden">
           {theme === "guam" && (
@@ -381,8 +379,6 @@ export default function HomeScreen() {
             <SavingForm tripId={trip.trip_id} userId={currentUser.user_id} onDone={fetchData} />
           )}
         </div>
-
-        <ThemeAccentStrip count={12} start={26} className="opacity-70" itemClassName="w-6 h-6" />
 
         {/* 支出履歴 */}
         <div className="bg-white rounded-2xl p-4 shadow-sm relative overflow-hidden">
