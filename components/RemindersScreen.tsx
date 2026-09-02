@@ -15,20 +15,33 @@ export default function RemindersScreen() {
   const { activeTrip, group, currentUser, isAdmin } = useLiff();
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sendAt, setSendAt] = useState("");
+  const [sendDate, setSendDate] = useState("");
+  const [sendTime, setSendTime] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editSendAt, setEditSendAt] = useState("");
+  const [editSendDate, setEditSendDate] = useState("");
+  const [editSendTime, setEditSendTime] = useState("");
   const [editMessage, setEditMessage] = useState("");
   const [editError, setEditError] = useState<string | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
 
-  const toLocalInputValue = (iso: string) => {
+  const toLocalDateParts = (iso: string) => {
     const d = new Date(iso);
     const pad = (n: number) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    return {
+      date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+      time: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
+    };
+  };
+
+  // date入力とtime入力を安全にISO文字列へ変換する（不正な値ならnullを返す）
+  const combineToISO = (datePart: string, timePart: string): string | null => {
+    if (!datePart || !timePart) return null;
+    const d = new Date(`${datePart}T${timePart}`);
+    if (Number.isNaN(d.getTime())) return null;
+    return d.toISOString();
   };
 
   const fetchReminders = useCallback(async () => {
@@ -44,8 +57,9 @@ export default function RemindersScreen() {
     if (!activeTrip || !group || !currentUser) return;
     if (!message.trim()) { setError("メッセージを入力してください"); return; }
     if (message.length > MAX_MESSAGE_LENGTH) { setError(`メッセージは${MAX_MESSAGE_LENGTH}文字以内にしてください`); return; }
-    if (!sendAt) { setError("送信日時を選択してください"); return; }
-    if (new Date(sendAt).getTime() <= Date.now()) { setError("送信日時は未来の日時を選択してください"); return; }
+    const sendAtISO = combineToISO(sendDate, sendTime);
+    if (!sendAtISO) { setError("送信日時を正しく選択してください"); return; }
+    if (new Date(sendAtISO).getTime() <= Date.now()) { setError("送信日時は未来の日時を選択してください"); return; }
 
     setSubmitting(true);
     setError(null);
@@ -58,7 +72,7 @@ export default function RemindersScreen() {
         group_id: group.group_id,
         created_by: currentUser.user_id,
         message: message.trim(),
-        send_at: new Date(sendAt).toISOString(),
+        send_at: sendAtISO,
       }),
     });
 
@@ -70,7 +84,8 @@ export default function RemindersScreen() {
       return;
     }
 
-    setSendAt("");
+    setSendDate("");
+    setSendTime("");
     setMessage("");
     fetchReminders();
   };
@@ -86,8 +101,10 @@ export default function RemindersScreen() {
   };
 
   const startEdit = (r: Reminder) => {
+    const { date, time } = toLocalDateParts(r.send_at);
     setEditingId(r.reminder_id);
-    setEditSendAt(toLocalInputValue(r.send_at));
+    setEditSendDate(date);
+    setEditSendTime(time);
     setEditMessage(r.message);
     setEditError(null);
   };
@@ -96,8 +113,9 @@ export default function RemindersScreen() {
     if (!currentUser) return;
     if (!editMessage.trim()) { setEditError("メッセージを入力してください"); return; }
     if (editMessage.length > MAX_MESSAGE_LENGTH) { setEditError(`メッセージは${MAX_MESSAGE_LENGTH}文字以内にしてください`); return; }
-    if (!editSendAt) { setEditError("送信日時を選択してください"); return; }
-    if (new Date(editSendAt).getTime() <= Date.now()) { setEditError("送信日時は未来の日時を選択してください"); return; }
+    const editSendAtISO = combineToISO(editSendDate, editSendTime);
+    if (!editSendAtISO) { setEditError("送信日時を正しく選択してください"); return; }
+    if (new Date(editSendAtISO).getTime() <= Date.now()) { setEditError("送信日時は未来の日時を選択してください"); return; }
 
     setSavingEdit(true);
     const res = await fetch(`/api/reminders/${reminderId}`, {
@@ -106,7 +124,7 @@ export default function RemindersScreen() {
       body: JSON.stringify({
         requesterId: currentUser.user_id,
         message: editMessage.trim(),
-        send_at: new Date(editSendAt).toISOString(),
+        send_at: editSendAtISO,
       }),
     });
     setSavingEdit(false);
@@ -151,12 +169,20 @@ export default function RemindersScreen() {
           )}
           <div>
             <label className="text-xs text-gray-500">送信日時</label>
-            <input
-              type="datetime-local"
-              value={sendAt}
-              onChange={(e) => setSendAt(e.target.value)}
-              className="w-full border rounded-xl px-3 py-2 text-sm mt-1"
-            />
+            <div className="flex gap-2 mt-1">
+              <input
+                type="date"
+                value={sendDate}
+                onChange={(e) => setSendDate(e.target.value)}
+                className="flex-1 min-w-0 border rounded-xl px-3 py-2 text-sm"
+              />
+              <input
+                type="time"
+                value={sendTime}
+                onChange={(e) => setSendTime(e.target.value)}
+                className="w-28 shrink-0 border rounded-xl px-3 py-2 text-sm"
+              />
+            </div>
           </div>
           <div>
             <label className="text-xs text-gray-500">メッセージ</label>
@@ -198,12 +224,20 @@ export default function RemindersScreen() {
                     {editError && (
                       <div className="bg-red-50 text-red-600 rounded-xl p-2 text-xs">{editError}</div>
                     )}
-                    <input
-                      type="datetime-local"
-                      value={editSendAt}
-                      onChange={(e) => setEditSendAt(e.target.value)}
-                      className="w-full border rounded-xl px-3 py-2 text-sm"
-                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="date"
+                        value={editSendDate}
+                        onChange={(e) => setEditSendDate(e.target.value)}
+                        className="flex-1 min-w-0 border rounded-xl px-3 py-2 text-sm"
+                      />
+                      <input
+                        type="time"
+                        value={editSendTime}
+                        onChange={(e) => setEditSendTime(e.target.value)}
+                        className="w-28 shrink-0 border rounded-xl px-3 py-2 text-sm"
+                      />
+                    </div>
                     <textarea
                       value={editMessage}
                       onChange={(e) => setEditMessage(e.target.value)}
