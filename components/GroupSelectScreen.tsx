@@ -8,6 +8,7 @@ import HibiscusFlower from "./guam-illustrations/HibiscusFlower";
 import PalmSunset from "./guam-illustrations/PalmSunset";
 import LatteStone from "./guam-illustrations/LatteStone";
 import Seashell from "./guam-illustrations/Seashell";
+import Airplane from "./guam-illustrations/Airplane";
 import GuamAccent from "./guam-illustrations/GuamAccent";
 
 interface GroupEntry {
@@ -178,6 +179,7 @@ export default function GroupSelectScreen({ profile, existingGroups, onSelected 
       <div className="text-center relative">
         {ACTIVE_THEME === "guam" && (
           <>
+            <Airplane className="w-20 h-14 absolute -top-4 -left-2 opacity-90" />
             <HulaDancer className="w-14 h-16 mx-auto" />
             <HibiscusFlower className="w-8 h-8 absolute top-0 right-4 opacity-80" />
           </>

@@ -7,6 +7,7 @@ import HulaDancer from "./guam-illustrations/HulaDancer";
 import PalmSunset from "./guam-illustrations/PalmSunset";
 import LatteStone from "./guam-illustrations/LatteStone";
 import Seashell from "./guam-illustrations/Seashell";
+import Airplane from "./guam-illustrations/Airplane";
 
 interface Props {
   profile: LiffProfile;
@@ -103,7 +104,10 @@ export default function JoinScreen({ profile, onJoined }: Props) {
       <div className="w-full max-w-sm space-y-5">
         <div className="text-center">
           {ACTIVE_THEME === "guam" && (
-            <HulaDancer className="w-14 h-16 mx-auto" />
+            <>
+              <Airplane className="w-20 h-14 mx-auto" />
+              <HulaDancer className="w-14 h-16 mx-auto" />
+            </>
           )}
           <p className="text-2xl font-bold text-gray-800">Tabi-Pay</p>
           <p className="text-sm text-gray-500 mt-1">旅行グループを設定してください</p>
