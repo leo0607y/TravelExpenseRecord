@@ -172,9 +172,6 @@ export default function HomeScreen() {
             )}
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/reminders" className="text-xs bg-white/20 rounded-full px-3 py-1 whitespace-nowrap">
-              🔔
-            </Link>
             <Link href="/history" className="text-xs bg-white/20 rounded-full px-3 py-1 whitespace-nowrap">
               履歴
             </Link>
@@ -189,6 +186,14 @@ export default function HomeScreen() {
       </div>
 
       <div className="p-4 space-y-4">
+        {/* リマインダー */}
+        <Link
+          href="/reminders"
+          className="block w-full text-center bg-white border-2 border-brand-green text-brand-green rounded-2xl py-3 font-bold shadow-sm"
+        >
+          🔔 リマインダーを見る・予約する
+        </Link>
+
         {/* 総支出カード */}
         <div className="bg-white rounded-2xl p-4 shadow-sm relative overflow-hidden">
           <p className="text-xs text-gray-500">🎉 ワクワク総支出</p>
