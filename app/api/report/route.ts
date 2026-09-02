@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
           <div class="expense-meta">受益者：${bens}</div>
           ${e.memo ? `<div class="expense-memo">📝 ${e.memo}</div>` : ""}
         </div>
-        <div class="expense-amount">${fmtYen(e.amount)}</div>
+        <div class="expense-amount">${fmtYen(e.amount)}${e.currency === "USD" ? `<div class="expense-fx">$${(e.foreign_amount ?? 0).toLocaleString()}</div>` : ""}</div>
       </div>
       ${imgTag}
     </div>`;
@@ -134,6 +134,7 @@ export async function GET(req: NextRequest) {
   .expense-meta { font-size: 12px; color: #888; margin-top: 3px; }
   .expense-memo { font-size: 12px; color: #555; margin-top: 4px; background: #f9f9f9; padding: 4px 8px; border-radius: 6px; }
   .expense-amount { font-size: 18px; font-weight: 800; color: #1a1a1a; white-space: nowrap; }
+  .expense-fx { font-size: 11px; font-weight: 400; color: #999; margin-top: 2px; }
   .receipt-img img { width: 100%; max-height: 280px; object-fit: cover; display: block; }
   .route-row { display: flex; align-items: center; gap: 10px; background: #fff8f0; border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; }
   .from, .to { font-weight: 700; font-size: 14px; }

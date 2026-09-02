@@ -1,6 +1,7 @@
 export type UserRole = "admin" | "member";
 export type TripStatus = "active" | "settled";
 export type PaymentType = "card" | "cash";
+export type Currency = "JPY" | "USD";
 export type SavingStatus = "pending" | "approved";
 
 export interface Group {
@@ -46,6 +47,8 @@ export interface Expense {
   trip_id: string;
   payer_id: string;
   amount: number;
+  currency: Currency;
+  foreign_amount: number | null;
   payment_type: PaymentType;
   title: string;
   memo: string | null;

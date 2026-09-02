@@ -12,11 +12,14 @@ type ExpenseWithDetails = Expense & {
 
 export default function ExpensesScreen() {
   const router = useRouter();
-  const { activeTrip } = useLiff();
+  const { activeTrip, currentUser, isAdmin } = useLiff();
   const [expenses, setExpenses] = useState<ExpenseWithDetails[]>([]);
   const [settlementRoutes, setSettlementRoutes] = useState<SettlementRoute[]>([]);
   const [loading, setLoading] = useState(true);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
+  const [editAmount, setEditAmount] = useState("");
+  const [savingAmount, setSavingAmount] = useState(false);
 
   const fetchExpenses = useCallback(async () => {
     if (!activeTrip) return;
@@ -37,6 +40,20 @@ export default function ExpensesScreen() {
   }, [activeTrip]);
 
   useEffect(() => { fetchExpenses(); }, [fetchExpenses]);
+
+  const updateExpenseAmount = async (expenseId: string) => {
+    const newAmount = Number(editAmount);
+    if (!newAmount || newAmount <= 0) return;
+    setSavingAmount(true);
+    await fetch(`/api/expenses/${expenseId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount: newAmount }),
+    });
+    setEditingExpenseId(null);
+    setSavingAmount(false);
+    fetchExpenses();
+  };
 
   const totalCard = expenses.filter((e) => e.payment_type === "card").reduce((s, e) => s + e.amount, 0);
   const totalCash = expenses.filter((e) => e.payment_type === "cash").reduce((s, e) => s + e.amount, 0);
@@ -135,9 +152,47 @@ export default function ExpensesScreen() {
                     <p className="text-xs text-gray-600 mt-1 bg-gray-50 rounded-lg px-2 py-1">📝 {e.memo}</p>
                   )}
                 </div>
-                <p className="text-lg font-black text-gray-800 ml-3 shrink-0">
-                  ¥{e.amount.toLocaleString()}
-                </p>
+                <div className="ml-3 shrink-0 text-right">
+                  {editingExpenseId === e.expense_id ? (
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="number"
+                        value={editAmount}
+                        onChange={(ev) => setEditAmount(ev.target.value)}
+                        className="w-24 border-2 border-brand-green rounded-lg px-2 py-1 text-sm text-right font-bold"
+                        autoFocus
+                      />
+                      <button
+                        onClick={() => updateExpenseAmount(e.expense_id)}
+                        disabled={savingAmount}
+                        className="text-xs bg-brand-green text-white rounded-lg px-2 py-1.5 font-bold disabled:opacity-50 whitespace-nowrap"
+                      >
+                        保存
+                      </button>
+                      <button
+                        onClick={() => setEditingExpenseId(null)}
+                        className="text-xs text-gray-400 whitespace-nowrap"
+                      >
+                        取消
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-lg font-black text-gray-800">¥{e.amount.toLocaleString()}</p>
+                      {e.currency === "USD" && (
+                        <p className="text-xs text-gray-400">${(e.foreign_amount ?? 0).toLocaleString()}</p>
+                      )}
+                      {(e.payer_id === currentUser?.user_id || isAdmin) && (
+                        <button
+                          onClick={() => { setEditingExpenseId(e.expense_id); setEditAmount(String(e.amount)); }}
+                          className="text-xs text-brand-green underline mt-0.5"
+                        >
+                          {e.currency === "USD" ? "円換算額を修正" : "修正"}
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
               {e.image_url && (
                 <button

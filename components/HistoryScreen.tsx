@@ -159,9 +159,12 @@ export default function HistoryScreen() {
                                 </p>
                                 {e.memo && <p className="text-xs text-gray-500 mt-0.5">📝 {e.memo}</p>}
                               </div>
-                              <p className="text-sm font-bold text-gray-800 ml-3 shrink-0">
-                                ¥{e.amount.toLocaleString()}
-                              </p>
+                              <div className="ml-3 shrink-0 text-right">
+                                <p className="text-sm font-bold text-gray-800">¥{e.amount.toLocaleString()}</p>
+                                {e.currency === "USD" && (
+                                  <p className="text-xs text-gray-400">${(e.foreign_amount ?? 0).toLocaleString()}</p>
+                                )}
+                              </div>
                             </div>
                           </div>
                         ))}

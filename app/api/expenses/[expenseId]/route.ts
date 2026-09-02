@@ -10,9 +10,12 @@ export async function PATCH(
   const body = await req.json();
   const supabase = createAdminClient();
 
+  const update: Record<string, unknown> = { amount: body.amount };
+  if (body.foreign_amount !== undefined) update.foreign_amount = body.foreign_amount;
+
   const { data, error } = await supabase
     .from("expenses")
-    .update({ amount: body.amount })
+    .update(update)
     .eq("expense_id", expenseId)
     .select()
     .single();

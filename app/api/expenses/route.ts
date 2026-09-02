@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 
 /** POST /api/expenses — 支出を登録する */
 export async function POST(req: NextRequest) {
-  const { trip_id, payer_id, amount, payment_type, title, memo, image_url, paid_at, beneficiary_ids } =
+  const { trip_id, payer_id, amount, currency, foreign_amount, payment_type, title, memo, image_url, paid_at, beneficiary_ids } =
     await req.json();
 
   if (!beneficiary_ids || beneficiary_ids.length === 0) {
@@ -14,7 +14,18 @@ export async function POST(req: NextRequest) {
 
   const { data: expense, error } = await supabase
     .from("expenses")
-    .insert({ trip_id, payer_id, amount, payment_type, title, memo: memo ?? null, image_url: image_url ?? null, paid_at })
+    .insert({
+      trip_id,
+      payer_id,
+      amount,
+      currency: currency === "USD" ? "USD" : "JPY",
+      foreign_amount: currency === "USD" ? foreign_amount ?? null : null,
+      payment_type,
+      title,
+      memo: memo ?? null,
+      image_url: image_url ?? null,
+      paid_at,
+    })
     .select()
     .single();
 

@@ -50,17 +50,22 @@ CREATE TABLE IF NOT EXISTS savings (
 
 -- Expenses（支出）
 CREATE TABLE IF NOT EXISTS expenses (
-  expense_id   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  trip_id      UUID NOT NULL REFERENCES trips(trip_id) ON DELETE CASCADE,
-  payer_id     TEXT NOT NULL REFERENCES users(user_id),
-  amount       INTEGER NOT NULL CHECK (amount > 0),
-  payment_type TEXT NOT NULL CHECK (payment_type IN ('card', 'cash')),
-  title        TEXT NOT NULL,
-  memo         TEXT,
-  image_url    TEXT,
-  paid_at      DATE NOT NULL,
-  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  expense_id     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  trip_id        UUID NOT NULL REFERENCES trips(trip_id) ON DELETE CASCADE,
+  payer_id       TEXT NOT NULL REFERENCES users(user_id),
+  amount         INTEGER NOT NULL CHECK (amount > 0), -- 精算計算で使う円換算額（USDの場合は概算→後で確定額に修正する）
+  currency       TEXT NOT NULL DEFAULT 'JPY' CHECK (currency IN ('JPY', 'USD')),
+  foreign_amount NUMERIC, -- currency='USD'のときのドル建て金額（参考表示用。精算計算には使わない）
+  payment_type   TEXT NOT NULL CHECK (payment_type IN ('card', 'cash')),
+  title          TEXT NOT NULL,
+  memo           TEXT,
+  image_url      TEXT,
+  paid_at        DATE NOT NULL,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+-- ※ 既存DBへの適用:
+--   ALTER TABLE expenses ADD COLUMN IF NOT EXISTS currency TEXT NOT NULL DEFAULT 'JPY' CHECK (currency IN ('JPY', 'USD'));
+--   ALTER TABLE expenses ADD COLUMN IF NOT EXISTS foreign_amount NUMERIC;
 
 -- ExpenseBeneficiaries（支出受益者・中間テーブル）
 CREATE TABLE IF NOT EXISTS expense_beneficiaries (

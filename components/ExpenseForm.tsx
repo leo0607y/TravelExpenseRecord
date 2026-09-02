@@ -9,6 +9,8 @@ export default function ExpenseForm() {
   const { activeTrip, members, currentUser } = useLiff();
 
   const [amount, setAmount] = useState("");
+  const [currency, setCurrency] = useState<"JPY" | "USD">("JPY");
+  const [foreignAmount, setForeignAmount] = useState("");
   const [title, setTitle] = useState("");
   const [memo, setMemo] = useState("");
   const [paymentType, setPaymentType] = useState<"card" | "cash">("card");
@@ -65,6 +67,8 @@ export default function ExpenseForm() {
         trip_id: activeTrip.trip_id,
         payer_id: payerId,
         amount: Number(amount),
+        currency,
+        foreign_amount: currency === "USD" && foreignAmount ? Number(foreignAmount) : null,
         payment_type: paymentType,
         title: title.trim(),
         memo: memo.trim() || null,
@@ -101,7 +105,39 @@ export default function ExpenseForm() {
         {/* 金額 */}
         <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
           <div>
-            <label className="text-xs text-gray-500">金額（円）</label>
+            <label className="text-xs text-gray-500">通貨</label>
+            <div className="flex gap-2 mt-1">
+              {(["JPY", "USD"] as const).map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setCurrency(c)}
+                  className={`flex-1 py-2 rounded-xl text-sm font-bold border-2 transition-colors ${
+                    currency === c
+                      ? "border-brand-green bg-green-50 text-brand-green"
+                      : "border-gray-200 text-gray-500"
+                  }`}
+                >
+                  {c === "JPY" ? "円" : "USD（ドル）"}
+                </button>
+              ))}
+            </div>
+          </div>
+          {currency === "USD" && (
+            <div>
+              <label className="text-xs text-gray-500">ドル金額（参考記録用）</label>
+              <input
+                type="number"
+                value={foreignAmount}
+                onChange={(e) => setForeignAmount(e.target.value)}
+                placeholder="0"
+                className="w-full border rounded-xl px-3 py-2 text-sm mt-1"
+              />
+            </div>
+          )}
+          <div>
+            <label className="text-xs text-gray-500">
+              {currency === "USD" ? "円換算額（今の概算でOK・カード請求が来たら修正できます）" : "金額（円）"}
+            </label>
             <input
               type="number"
               value={amount}

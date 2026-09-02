@@ -174,7 +174,12 @@ export default function SettleScreen() {
                         <p className="text-xs text-gray-400">{e.payer.display_name} ／ {e.payment_type === "card" ? "💳" : "💴"}</p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <p className="text-sm font-bold text-gray-800">¥{e.amount.toLocaleString()}</p>
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-gray-800">¥{e.amount.toLocaleString()}</p>
+                          {e.currency === "USD" && (
+                            <p className="text-xs text-gray-400">${(e.foreign_amount ?? 0).toLocaleString()}</p>
+                          )}
+                        </div>
                         <button
                           onClick={() => { setEditingExpenseId(e.expense_id); setEditAmount(String(e.amount)); }}
                           className="text-xs text-brand-green underline"
