@@ -16,6 +16,17 @@ export default function RemindersScreen() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editSendAt, setEditSendAt] = useState("");
+  const [editMessage, setEditMessage] = useState("");
+  const [editError, setEditError] = useState<string | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const toLocalInputValue = (iso: string) => {
+    const d = new Date(iso);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
 
   const fetchReminders = useCallback(async () => {
     if (!activeTrip) return;
@@ -68,6 +79,42 @@ export default function RemindersScreen() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ requesterId: currentUser.user_id }),
     });
+    fetchReminders();
+  };
+
+  const startEdit = (r: Reminder) => {
+    setEditingId(r.reminder_id);
+    setEditSendAt(toLocalInputValue(r.send_at));
+    setEditMessage(r.message);
+    setEditError(null);
+  };
+
+  const saveEdit = async (reminderId: string) => {
+    if (!currentUser) return;
+    if (!editMessage.trim()) { setEditError("メッセージを入力してください"); return; }
+    if (editMessage.length > MAX_MESSAGE_LENGTH) { setEditError(`メッセージは${MAX_MESSAGE_LENGTH}文字以内にしてください`); return; }
+    if (!editSendAt) { setEditError("送信日時を選択してください"); return; }
+    if (new Date(editSendAt).getTime() <= Date.now()) { setEditError("送信日時は未来の日時を選択してください"); return; }
+
+    setSavingEdit(true);
+    const res = await fetch(`/api/reminders/${reminderId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        requesterId: currentUser.user_id,
+        message: editMessage.trim(),
+        send_at: new Date(editSendAt).toISOString(),
+      }),
+    });
+    setSavingEdit(false);
+
+    if (!res.ok) {
+      const { error: e } = await res.json();
+      setEditError(e ?? "保存に失敗しました");
+      return;
+    }
+
+    setEditingId(null);
     fetchReminders();
   };
 
@@ -136,23 +183,74 @@ export default function RemindersScreen() {
             <p className="text-sm text-gray-400 text-center py-4">予定中のリマインダーはありません</p>
           )}
           <div className="space-y-2">
-            {pending.map((r) => (
-              <div key={r.reminder_id} className="flex items-start justify-between gap-2 py-2 border-b border-gray-100 last:border-0">
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-400">{formatDateTime(r.send_at)}</p>
-                  <p className="text-sm text-gray-800 mt-0.5 whitespace-pre-wrap">{r.message}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{r.creator?.display_name ?? "メンバー"}が予約</p>
+            {pending.map((r) => {
+              const canManage = r.created_by === currentUser?.user_id || isAdmin;
+
+              if (editingId === r.reminder_id) {
+                return (
+                  <div key={r.reminder_id} className="py-2 border-b border-gray-100 last:border-0 space-y-2">
+                    {editError && (
+                      <div className="bg-red-50 text-red-600 rounded-xl p-2 text-xs">{editError}</div>
+                    )}
+                    <input
+                      type="datetime-local"
+                      value={editSendAt}
+                      onChange={(e) => setEditSendAt(e.target.value)}
+                      className="w-full border rounded-xl px-3 py-2 text-sm"
+                    />
+                    <textarea
+                      value={editMessage}
+                      onChange={(e) => setEditMessage(e.target.value)}
+                      maxLength={MAX_MESSAGE_LENGTH}
+                      rows={3}
+                      className="w-full border rounded-xl px-3 py-2 text-sm resize-none"
+                    />
+                    <p className="text-xs text-gray-400 text-right">{editMessage.length}/{MAX_MESSAGE_LENGTH}</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => saveEdit(r.reminder_id)}
+                        disabled={savingEdit}
+                        className="flex-1 bg-brand-green text-white rounded-xl py-2 text-sm font-bold disabled:opacity-50"
+                      >
+                        {savingEdit ? "保存中..." : "保存"}
+                      </button>
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="flex-1 bg-white border border-gray-300 text-gray-600 rounded-xl py-2 text-sm"
+                      >
+                        キャンセル
+                      </button>
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div key={r.reminder_id} className="flex items-start justify-between gap-2 py-2 border-b border-gray-100 last:border-0">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-gray-400">{formatDateTime(r.send_at)}</p>
+                    <p className="text-sm text-gray-800 mt-0.5 whitespace-pre-wrap">{r.message}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{r.creator?.display_name ?? "メンバー"}が予約</p>
+                  </div>
+                  {canManage && (
+                    <div className="flex flex-col gap-1 shrink-0">
+                      <button
+                        onClick={() => startEdit(r)}
+                        className="text-xs bg-brand-green text-white rounded-full px-3 py-1"
+                      >
+                        編集
+                      </button>
+                      <button
+                        onClick={() => removeReminder(r.reminder_id)}
+                        className="text-xs bg-red-400 text-white rounded-full px-3 py-1"
+                      >
+                        取消
+                      </button>
+                    </div>
+                  )}
                 </div>
-                {(r.created_by === currentUser?.user_id || isAdmin) && (
-                  <button
-                    onClick={() => removeReminder(r.reminder_id)}
-                    className="text-xs bg-red-400 text-white rounded-full px-3 py-1 shrink-0"
-                  >
-                    取消
-                  </button>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
