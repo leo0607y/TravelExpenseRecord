@@ -22,7 +22,7 @@ jobs:
   reminders:
     if: |
       (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'reminders') ||
-      (github.event_name == 'schedule' && github.event.schedule == '* * * * *')
+      (github.event_name == 'schedule' && github.event.schedule == '*/5 * * * *')
     runs-on: ubuntu-latest
     steps:
       - name: Call reminders endpoint
