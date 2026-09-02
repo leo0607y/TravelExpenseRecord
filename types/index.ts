@@ -61,6 +61,18 @@ export interface ExpenseBeneficiary {
   user_id: string;
 }
 
+export interface Reminder {
+  reminder_id: string;
+  trip_id: string;
+  group_id: string;
+  created_by: string;
+  message: string;
+  send_at: string;
+  sent_at: string | null;
+  created_at: string;
+  creator?: { display_name: string };
+}
+
 // 精算計算用
 export interface NetPosition {
   user_id: string;

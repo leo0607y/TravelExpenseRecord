@@ -1,3 +1,5 @@
+import { themeLineMessage } from "./theme";
+
 const LINE_API = "https://api.line.me/v2/bot/message";
 
 function token() {
@@ -17,6 +19,7 @@ export interface LineMention {
 export async function sendLinePush(to: string, text: string, mention?: LineMention): Promise<void> {
   if (!token() || !to) return;
 
+  text = themeLineMessage(text);
   const message: Record<string, unknown> = { type: "text", text };
 
   if (mention) {

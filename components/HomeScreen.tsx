@@ -168,6 +168,9 @@ export default function HomeScreen() {
             )}
           </div>
           <div className="flex items-center gap-2">
+            <Link href="/reminders" className="text-xs bg-white/20 rounded-full px-3 py-1 whitespace-nowrap">
+              🔔
+            </Link>
             <Link href="/history" className="text-xs bg-white/20 rounded-full px-3 py-1 whitespace-nowrap">
               履歴
             </Link>

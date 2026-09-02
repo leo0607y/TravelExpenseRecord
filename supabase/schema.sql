@@ -69,6 +69,20 @@ CREATE TABLE IF NOT EXISTS expense_beneficiaries (
   PRIMARY KEY (expense_id, user_id)
 );
 
+-- Reminders（アプリ内から予約するリマインダー。指定日時にLINEへ送信される）
+CREATE TABLE IF NOT EXISTS reminders (
+  reminder_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  trip_id     UUID NOT NULL REFERENCES trips(trip_id) ON DELETE CASCADE,
+  group_id    TEXT NOT NULL REFERENCES groups(group_id),
+  created_by  TEXT NOT NULL REFERENCES users(user_id),
+  message     TEXT NOT NULL,
+  send_at     TIMESTAMPTZ NOT NULL,
+  sent_at     TIMESTAMPTZ,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_reminders_pending ON reminders(send_at) WHERE sent_at IS NULL;
+-- ※ 既存DBへの適用: 上記の CREATE TABLE / CREATE INDEX をSupabase SQL Editorでそのまま実行すればよい
+
 -- ============================================================
 -- Storage バケット（画像アップロード用）
 -- ============================================================
