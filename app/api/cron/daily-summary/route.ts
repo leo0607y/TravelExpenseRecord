@@ -18,6 +18,8 @@ export async function GET(req: NextRequest) {
   const { data: trips } = await supabase.from("trips").select("*").eq("status", "active");
 
   for (const trip of trips ?? []) {
+    if (trip.last_daily_summary_sent_on === today) continue;
+
     const [{ data: todayExpensesRaw }, { data: approvedSavings }, { data: allExpensesRaw }, { data: members }, { data: group }] =
       await Promise.all([
         supabase.from("expenses").select("*").eq("trip_id", trip.trip_id).eq("paid_at", today),
@@ -70,6 +72,8 @@ export async function GET(req: NextRequest) {
       // 未リンクの場合はメンバー全員に個別送信
       await Promise.all((members ?? []).map((m) => sendLinePush(m.user_id, message)));
     }
+
+    await supabase.from("trips").update({ last_daily_summary_sent_on: today }).eq("trip_id", trip.trip_id);
   }
 
   return NextResponse.json({ ok: true });

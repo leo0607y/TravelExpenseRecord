@@ -31,8 +31,13 @@ CREATE TABLE IF NOT EXISTS trips (
   status        TEXT NOT NULL DEFAULT 'active'
                   CHECK (status IN ('active', 'settled')),
   carry_over_in INTEGER NOT NULL DEFAULT 0,
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  last_daily_summary_sent_on       DATE, -- 本日の支出サマリーを最後に送った日（同日の二重実行での再送防止）
+  last_savings_reminder_sent_month TEXT  -- 月次積立リマインドを最後に送った月 'YYYY-MM'（同月の二重実行での再送防止）
 );
+-- ※ 既存DBへの適用:
+--   ALTER TABLE trips ADD COLUMN IF NOT EXISTS last_daily_summary_sent_on DATE;
+--   ALTER TABLE trips ADD COLUMN IF NOT EXISTS last_savings_reminder_sent_month TEXT;
 
 -- Savings（積立・入金履歴）
 CREATE TABLE IF NOT EXISTS savings (

@@ -28,6 +28,8 @@ export interface Trip {
   status: TripStatus;
   carry_over_in: number;
   created_at: string;
+  last_daily_summary_sent_on?: string | null;
+  last_savings_reminder_sent_month?: string | null;
 }
 
 export interface Saving {

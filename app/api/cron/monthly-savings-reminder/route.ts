@@ -13,10 +13,13 @@ export async function GET(req: NextRequest) {
   }
 
   const supabase = createAdminClient();
+  const thisMonth = new Date().toISOString().slice(0, 7); // 'YYYY-MM'
 
   const { data: trips } = await supabase.from("trips").select("*").eq("status", "active");
 
   for (const trip of trips ?? []) {
+    if (trip.last_savings_reminder_sent_month === thisMonth) continue;
+
     const [{ data: members }, { data: group }] = await Promise.all([
       supabase.from("users").select("*").eq("group_id", trip.group_id),
       supabase.from("groups").select("line_group_id").eq("group_id", trip.group_id).maybeSingle(),
@@ -29,6 +32,8 @@ export async function GET(req: NextRequest) {
     } else {
       await Promise.all((members ?? []).map((m) => sendLinePush(m.user_id, message)));
     }
+
+    await supabase.from("trips").update({ last_savings_reminder_sent_month: thisMonth }).eq("trip_id", trip.trip_id);
   }
 
   return NextResponse.json({ ok: true });
