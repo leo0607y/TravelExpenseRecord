@@ -10,7 +10,7 @@ const MANUAL_OVERRIDE: ThemeName | null = null;
 // 　9/8 06:00〜9/9 10:00   : 韓国テーマ（強制）
 // 　9/9 10:00 JST〜        : 標準/グアム/韓国をユーザーが自由に選択可能（初期値は韓国）
 //     （選択の切り替えは lib/theme-context.tsx が担当）
-const GUAM_SWITCH_AT = new Date("2026-09-03T14:00:00.000Z"); // 2026-09-03 23:00 JST
+const GUAM_SWITCH_AT = new Date("2026-09-02T15:29:00.000Z"); // 【一時】切替検証用。確認後 2026-09-03T14:00:00.000Z に戻すこと
 const KOREA_SWITCH_AT = new Date("2026-09-07T21:00:00.000Z"); // 2026-09-08 06:00 JST
 export const FREE_CHOICE_AT = new Date("2026-09-09T01:00:00.000Z"); // 2026-09-09 10:00 JST
 
