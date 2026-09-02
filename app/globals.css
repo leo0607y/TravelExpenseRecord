@@ -27,13 +27,19 @@
   background: transparent;
 }
 
-/* ヘッダー（ブランドカラー背景）に太陽と波の装飾を追加 */
+/* ブランドカラー背景全般（ボタン含む）はグラデーションに */
 [data-theme="guam"] .bg-brand-green {
+  background: linear-gradient(120deg, #00c9c2 0%, #0092b0 100%);
+}
+
+/* 画面ヘッダー（大きい帯状の bg-brand-green のみ）に太陽と波の装飾を追加。
+   小さなボタンにまで巨大な太陽が乗らないよう、ヘッダー特有のクラスの組み合わせに限定する */
+[data-theme="guam"] .bg-brand-green.text-white.px-4.py-4 {
   background: linear-gradient(120deg, #00c9c2 0%, #0092b0 65%, #0092b0 100%);
   position: relative;
   overflow: hidden;
 }
-[data-theme="guam"] .bg-brand-green::before {
+[data-theme="guam"] .bg-brand-green.text-white.px-4.py-4::before {
   content: "";
   position: absolute;
   top: -28px;
@@ -44,7 +50,7 @@
   background: radial-gradient(circle, #ffe08a 0%, #ffb648 62%, rgba(255, 182, 72, 0) 72%);
   pointer-events: none;
 }
-[data-theme="guam"] .bg-brand-green::after {
+[data-theme="guam"] .bg-brand-green.text-white.px-4.py-4::after {
   content: "";
   position: absolute;
   left: 0;
