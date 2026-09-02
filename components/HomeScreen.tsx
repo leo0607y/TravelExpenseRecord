@@ -485,8 +485,7 @@ export default function HomeScreen() {
 
       {/* 固定フッター */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t max-w-md mx-auto">
-        <ThemeAccentStrip count={12} start={7} className="px-3 pt-1.5 opacity-60" itemClassName="w-5 h-5" />
-        <div className="flex gap-2 px-3 pb-3 pt-1">
+        <div className="flex gap-2 p-3">
           <Link
             href="/expenses"
             className="flex-1 text-center bg-gray-100 text-gray-700 rounded-2xl py-3 text-sm font-bold"
