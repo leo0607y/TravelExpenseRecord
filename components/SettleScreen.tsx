@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useLiff } from "./LiffProvider";
+import { ACTIVE_THEME } from "@/lib/theme";
+import GuamAccent from "./guam-illustrations/GuamAccent";
 import type { TripSummary, Expense } from "@/types";
 
 type ExpenseWithPayer = Expense & { payer: { display_name: string } };
@@ -138,7 +140,7 @@ export default function SettleScreen() {
           <div className="bg-white rounded-2xl p-4 shadow-sm">
             <p className="text-xs text-gray-500 mb-3">📋 支出一覧（金額を修正できます）</p>
             <div className="space-y-2">
-              {expenses.map((e) => (
+              {expenses.map((e, i) => (
                 <div key={e.expense_id} className="border-b border-gray-100 pb-2 last:border-0 last:pb-0">
                   {editingExpenseId === e.expense_id ? (
                     <div className="flex items-center gap-2">
@@ -169,9 +171,14 @@ export default function SettleScreen() {
                     </div>
                   ) : (
                     <div className="flex items-center justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-800 truncate">{e.title}</p>
-                        <p className="text-xs text-gray-400">{e.payer.display_name} ／ {e.payment_type === "card" ? "💳" : "💴"}</p>
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        {ACTIVE_THEME === "guam" && (
+                          <GuamAccent index={i} className="w-5 h-5 shrink-0 opacity-70" />
+                        )}
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-800 truncate">{e.title}</p>
+                          <p className="text-xs text-gray-400">{e.payer.display_name} ／ {e.payment_type === "card" ? "💳" : "💴"}</p>
+                        </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <div className="text-right">
@@ -199,7 +206,7 @@ export default function SettleScreen() {
         <div className="bg-white rounded-2xl p-4 shadow-sm">
           <p className="text-xs text-gray-500 mb-3">👤 みんなが実質楽しんだ額</p>
           <div className="space-y-3">
-            {members.map((m) => {
+            {members.map((m, i) => {
               const benefit = summary.benefit_per_user[m.user_id] ?? 0;
               const maxBenefit = Math.max(...Object.values(summary.benefit_per_user));
               const pct = maxBenefit > 0 ? (benefit / maxBenefit) * 100 : 0;
@@ -208,7 +215,12 @@ export default function SettleScreen() {
               return (
                 <div key={m.user_id}>
                   <div className="flex justify-between text-sm mb-1">
-                    <span>{emoji} {m.display_name}</span>
+                    <span className="flex items-center gap-1">
+                      {ACTIVE_THEME === "guam" && (
+                        <GuamAccent index={i} className="w-5 h-5 opacity-70" />
+                      )}
+                      {emoji} {m.display_name}
+                    </span>
                     <span className="font-bold">¥{Math.round(benefit).toLocaleString()}</span>
                   </div>
                   <div className="bg-gray-100 rounded-full h-2">
@@ -231,13 +243,16 @@ export default function SettleScreen() {
           ) : (
             <div className="space-y-2">
               {summary.settlement_routes.map((r, i) => (
-                <div key={i} className="flex items-center gap-2 bg-orange-50 rounded-xl p-3">
+                <div key={i} className="relative flex items-center gap-2 bg-orange-50 rounded-xl p-3 overflow-hidden">
                   <span className="text-sm font-bold text-gray-700">{r.from_name}</span>
                   <span className="text-orange-400">➔</span>
                   <span className="text-sm font-bold text-gray-700">{r.to_name}</span>
                   <span className="ml-auto text-sm font-black text-orange-600">
                     ¥{r.amount.toLocaleString()}
                   </span>
+                  {ACTIVE_THEME === "guam" && (
+                    <GuamAccent index={i} className="absolute -right-1 -bottom-1 w-7 h-7 opacity-20 pointer-events-none" />
+                  )}
                 </div>
               ))}
             </div>

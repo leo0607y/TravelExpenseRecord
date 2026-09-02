@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLiff } from "./LiffProvider";
 import { ACTIVE_THEME } from "@/lib/theme";
 import HibiscusFlower from "./guam-illustrations/HibiscusFlower";
+import GuamAccent from "./guam-illustrations/GuamAccent";
 import type { Trip, Expense } from "@/types";
 
 type ExpenseWithPayer = Expense & { payer: { display_name: string } };
@@ -79,14 +80,17 @@ export default function HistoryScreen() {
             <p className="text-gray-400">過去の旅行はまだありません</p>
           </div>
         )}
-        {trips.map((trip) => {
+        {trips.map((trip, tripIndex) => {
           const tripTotal = (trip.expenses ?? []).reduce((s, e) => s + e.amount, 0);
           const tripCard = (trip.expenses ?? []).filter((e) => e.payment_type === "card").reduce((s, e) => s + e.amount, 0);
           const tripCash = (trip.expenses ?? []).filter((e) => e.payment_type === "cash").reduce((s, e) => s + e.amount, 0);
           const imageCount = (trip.expenses ?? []).filter((e) => e.image_url).length;
 
           return (
-            <div key={trip.trip_id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div key={trip.trip_id} className="relative bg-white rounded-2xl shadow-sm overflow-hidden">
+              {ACTIVE_THEME === "guam" && (
+                <GuamAccent index={tripIndex} className="absolute -right-2 -top-2 w-10 h-10 opacity-20 pointer-events-none" />
+              )}
               {/* 旅行ヘッダー（タップで開閉） */}
               <button
                 onClick={() => toggleTrip(trip.trip_id)}
@@ -139,8 +143,8 @@ export default function HistoryScreen() {
                         {(trip.expenses ?? []).length === 0 && (
                           <p className="text-center text-gray-400 text-sm py-4">支出データなし</p>
                         )}
-                        {(trip.expenses ?? []).map((e) => (
-                          <div key={e.expense_id}>
+                        {(trip.expenses ?? []).map((e, expenseIndex) => (
+                          <div key={e.expense_id} className="relative">
                             {/* 画像（ある場合） */}
                             {e.image_url && (
                               <button
@@ -155,6 +159,9 @@ export default function HistoryScreen() {
                                   style={{ maxHeight: "200px" }}
                                 />
                               </button>
+                            )}
+                            {ACTIVE_THEME === "guam" && (
+                              <GuamAccent index={tripIndex + expenseIndex} className="absolute right-1 top-1 w-6 h-6 opacity-20 pointer-events-none" />
                             )}
                             <div className="flex items-center justify-between px-4 py-3">
                               <div className="flex-1 min-w-0">

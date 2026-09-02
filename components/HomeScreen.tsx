@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useLiff } from "./LiffProvider";
 import GuamMascot from "./GuamMascot";
 import HulaDancer from "./guam-illustrations/HulaDancer";
+import GuamAccent from "./guam-illustrations/GuamAccent";
 import { ACTIVE_THEME } from "@/lib/theme";
 import type { Expense, Saving, Trip } from "@/types";
 
@@ -201,7 +202,10 @@ export default function HomeScreen() {
         </div>
 
         {/* プール残高カード */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
+        <div className="bg-white rounded-2xl p-4 shadow-sm relative overflow-hidden">
+          {ACTIVE_THEME === "guam" && (
+            <GuamAccent index={2} className="absolute -right-2 -bottom-2 w-10 h-10 opacity-20 pointer-events-none" />
+          )}
           <p className="text-xs text-gray-500">💰 口座プール残高</p>
           <p className={`text-2xl font-bold mt-1 ${poolBalance < 0 ? "text-red-600" : "text-blue-600"}`}>
             ¥{poolBalance.toLocaleString()}
@@ -361,22 +365,27 @@ export default function HomeScreen() {
             <p className="text-sm text-gray-400 text-center py-4">支出がまだありません</p>
           )}
           <div className="space-y-2">
-            {expenses.map((e) => (
+            {expenses.map((e, i) => (
               <div key={e.expense_id}>
                 <button
                   onClick={() => setExpandedId(expandedId === e.expense_id ? null : e.expense_id)}
                   className="w-full text-left"
                 >
                   <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <div>
-                      <p className="text-sm font-medium text-gray-800">
-                        {e.title}{e.image_url && " 📸"}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {e.paid_at} ／ {e.payer.display_name} ／ {e.payment_type === "card" ? "💳" : "💴"}
-                      </p>
+                    <div className="flex items-center gap-2 min-w-0">
+                      {ACTIVE_THEME === "guam" && (
+                        <GuamAccent index={i} className="w-5 h-5 shrink-0 opacity-70" />
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate">
+                          {e.title}{e.image_url && " 📸"}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {e.paid_at} ／ {e.payer.display_name} ／ {e.payment_type === "card" ? "💳" : "💴"}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-sm font-bold text-gray-800">¥{e.amount.toLocaleString()}</p>
+                    <p className="text-sm font-bold text-gray-800 shrink-0 ml-2">¥{e.amount.toLocaleString()}</p>
                   </div>
                 </button>
                 {expandedId === e.expense_id && (

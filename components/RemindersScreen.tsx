@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLiff } from "./LiffProvider";
 import { ACTIVE_THEME } from "@/lib/theme";
 import OceanWave from "./guam-illustrations/OceanWave";
+import GuamAccent from "./guam-illustrations/GuamAccent";
 import type { Reminder } from "@/types";
 
 const MAX_MESSAGE_LENGTH = 300;
@@ -188,7 +189,7 @@ export default function RemindersScreen() {
             </div>
           )}
           <div className="space-y-2">
-            {pending.map((r) => {
+            {pending.map((r, i) => {
               const canManage = r.created_by === currentUser?.user_id || isAdmin;
 
               if (editingId === r.reminder_id) {
@@ -232,10 +233,15 @@ export default function RemindersScreen() {
 
               return (
                 <div key={r.reminder_id} className="flex items-start justify-between gap-2 py-2 border-b border-gray-100 last:border-0">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-gray-400">{formatDateTime(r.send_at)}</p>
-                    <p className="text-sm text-gray-800 mt-0.5 whitespace-pre-wrap">{r.message}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{r.creator?.display_name ?? "メンバー"}が予約</p>
+                  <div className="flex items-start gap-2 flex-1 min-w-0">
+                    {ACTIVE_THEME === "guam" && (
+                      <GuamAccent index={i} className="w-6 h-6 shrink-0 opacity-70 mt-0.5" />
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-xs text-gray-400">{formatDateTime(r.send_at)}</p>
+                      <p className="text-sm text-gray-800 mt-0.5 whitespace-pre-wrap">{r.message}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{r.creator?.display_name ?? "メンバー"}が予約</p>
+                    </div>
                   </div>
                   {canManage && (
                     <div className="flex flex-col gap-1 shrink-0">
@@ -264,11 +270,16 @@ export default function RemindersScreen() {
           <div className="bg-white rounded-2xl p-4 shadow-sm">
             <p className="text-xs text-gray-500 mb-3">✅ 送信済み</p>
             <div className="space-y-2">
-              {sent.map((r) => (
-                <div key={r.reminder_id} className="py-2 border-b border-gray-100 last:border-0">
-                  <p className="text-xs text-gray-400">{formatDateTime(r.send_at)}</p>
-                  <p className="text-sm text-gray-600 mt-0.5 whitespace-pre-wrap">{r.message}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{r.creator?.display_name ?? "メンバー"}が予約</p>
+              {sent.map((r, i) => (
+                <div key={r.reminder_id} className="flex items-start gap-2 py-2 border-b border-gray-100 last:border-0">
+                  {ACTIVE_THEME === "guam" && (
+                    <GuamAccent index={i} className="w-6 h-6 shrink-0 opacity-50 mt-0.5" />
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-xs text-gray-400">{formatDateTime(r.send_at)}</p>
+                    <p className="text-sm text-gray-600 mt-0.5 whitespace-pre-wrap">{r.message}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{r.creator?.display_name ?? "メンバー"}が予約</p>
+                  </div>
                 </div>
               ))}
             </div>

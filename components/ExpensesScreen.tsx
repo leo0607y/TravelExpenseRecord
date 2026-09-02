@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLiff } from "./LiffProvider";
 import { ACTIVE_THEME } from "@/lib/theme";
 import OceanWave from "./guam-illustrations/OceanWave";
+import GuamAccent from "./guam-illustrations/GuamAccent";
 import type { Expense, SettlementRoute } from "@/types";
 
 type ExpenseWithDetails = Expense & {
@@ -104,13 +105,16 @@ export default function ExpensesScreen() {
         ) : (
           <div className="space-y-2">
             {settlementRoutes.map((r, i) => (
-              <div key={i} className="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2">
+              <div key={i} className="relative flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2 overflow-hidden">
                 <span className="text-sm text-gray-700">
                   <span className="font-bold text-red-500">{r.from_name}</span>
                   <span className="mx-1 text-gray-400">→</span>
                   <span className="font-bold text-brand-green">{r.to_name}</span>
                 </span>
                 <span className="text-sm font-black text-gray-800">¥{r.amount.toLocaleString()}</span>
+                {ACTIVE_THEME === "guam" && (
+                  <GuamAccent index={i} className="absolute -right-1 -bottom-1 w-6 h-6 opacity-20 pointer-events-none" />
+                )}
               </div>
             ))}
           </div>
@@ -125,8 +129,11 @@ export default function ExpensesScreen() {
             <p className="text-gray-400">支出がまだありません</p>
           </div>
         )}
-        {expenses.map((e) => (
-          <div key={e.expense_id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        {expenses.map((e, i) => (
+          <div key={e.expense_id} className="relative bg-white rounded-2xl shadow-sm overflow-hidden">
+            {ACTIVE_THEME === "guam" && (
+              <GuamAccent index={i} className="absolute -right-2 -bottom-2 w-10 h-10 opacity-20 pointer-events-none" />
+            )}
             {/* 画像（ある場合は上部に大きく表示） */}
             {e.image_url && (
               <button

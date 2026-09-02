@@ -4,6 +4,9 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useLiff } from "@/components/LiffProvider";
+import { ACTIVE_THEME } from "@/lib/theme";
+import GuamAccent from "@/components/guam-illustrations/GuamAccent";
+import Seashell from "@/components/guam-illustrations/Seashell";
 import type { Saving, Trip } from "@/types";
 
 type SavingWithUser = Saving & { user: { display_name: string; picture_url: string | null } };
@@ -87,17 +90,23 @@ export default function SavingsPage() {
         </div>
 
         {tripGroups.length === 0 && (
-          <p className="text-center text-gray-400 text-sm py-12">積立はまだありません</p>
+          <div className="text-center py-12">
+            {ACTIVE_THEME === "guam" && <Seashell className="w-14 h-12 mx-auto mb-2 opacity-80" />}
+            <p className="text-gray-400 text-sm">積立はまだありません</p>
+          </div>
         )}
 
-        {tripGroups.map(({ trip, savings }) => {
+        {tripGroups.map(({ trip, savings }, tripIndex) => {
           const isActive = trip.trip_id === activeTrip?.trip_id;
           const tripApproved = savings.filter((s) => s.status === "approved").reduce((sum, s) => sum + s.amount, 0);
           const tripPending = savings.filter((s) => s.status === "pending");
           const tripApprovedList = savings.filter((s) => s.status === "approved");
 
           return (
-            <div key={trip.trip_id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div key={trip.trip_id} className="relative bg-white rounded-2xl shadow-sm overflow-hidden">
+              {ACTIVE_THEME === "guam" && (
+                <GuamAccent index={tripIndex} className="absolute -right-2 -top-2 w-10 h-10 opacity-20 pointer-events-none" />
+              )}
               {/* 旅行ヘッダー */}
               <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
                 <div>
@@ -116,10 +125,11 @@ export default function SavingsPage() {
                   <div>
                     <p className="text-xs text-gray-500 mb-2">⏳ 確認待ち</p>
                     <div className="space-y-3">
-                      {tripPending.map((s) => (
+                      {tripPending.map((s, i) => (
                         <SavingRow
                           key={s.saving_id}
                           s={s}
+                          accentIndex={i}
                           isEditing={editingSavingId === s.saving_id}
                           editingTitle={editingTitle}
                           currentUserId={currentUser?.user_id}
@@ -141,10 +151,11 @@ export default function SavingsPage() {
                   <div>
                     <p className="text-xs text-gray-500 mb-2">✅ 積立済み</p>
                     <div className="space-y-3">
-                      {tripApprovedList.map((s) => (
+                      {tripApprovedList.map((s, i) => (
                         <SavingRow
                           key={s.saving_id}
                           s={s}
+                          accentIndex={i}
                           isEditing={editingSavingId === s.saving_id}
                           editingTitle={editingTitle}
                           currentUserId={currentUser?.user_id}
@@ -170,11 +181,12 @@ export default function SavingsPage() {
 }
 
 function SavingRow({
-  s, isEditing, editingTitle, currentUserId, canApprove,
+  s, accentIndex, isEditing, editingTitle, currentUserId, canApprove,
   onStartEdit, onSaveTitle, onCancelEdit, onEditingTitleChange,
   onApprove, onReject,
 }: {
   s: SavingWithUser;
+  accentIndex: number;
   isEditing: boolean;
   editingTitle: string;
   currentUserId?: string;
@@ -188,6 +200,9 @@ function SavingRow({
 }) {
   return (
     <div className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0">
+      {ACTIVE_THEME === "guam" && (
+        <GuamAccent index={accentIndex} className="w-6 h-6 shrink-0 opacity-70" />
+      )}
       {s.user?.picture_url ? (
         <Image src={s.user.picture_url} alt={s.user.display_name} width={36} height={36} className="rounded-full shrink-0" />
       ) : (

@@ -6,6 +6,9 @@ import { ACTIVE_THEME } from "@/lib/theme";
 import HulaDancer from "./guam-illustrations/HulaDancer";
 import HibiscusFlower from "./guam-illustrations/HibiscusFlower";
 import PalmSunset from "./guam-illustrations/PalmSunset";
+import LatteStone from "./guam-illustrations/LatteStone";
+import Seashell from "./guam-illustrations/Seashell";
+import GuamAccent from "./guam-illustrations/GuamAccent";
 
 interface GroupEntry {
   user: User;
@@ -122,6 +125,7 @@ export default function GroupSelectScreen({ profile, existingGroups, onSelected 
   if (mode === "join") {
     return (
       <div className="w-full max-w-sm space-y-4">
+        {ACTIVE_THEME === "guam" && <Seashell className="w-14 h-12 mx-auto" />}
         <p className="text-center font-bold text-gray-800">招待コードで参加する</p>
         {error && <p className="text-red-500 text-sm text-center">{error}</p>}
         <input
@@ -150,6 +154,7 @@ export default function GroupSelectScreen({ profile, existingGroups, onSelected 
   if (mode === "create") {
     return (
       <div className="w-full max-w-sm space-y-4">
+        {ACTIVE_THEME === "guam" && <LatteStone className="w-10 h-14 mx-auto" />}
         <p className="text-center font-bold text-gray-800">新しいグループを作る</p>
         <p className="text-sm text-gray-500 text-center">あなたが管理者になります。作成後、招待コードをメンバーに共有してください。</p>
         {error && <p className="text-red-500 text-sm text-center">{error}</p>}
@@ -186,13 +191,17 @@ export default function GroupSelectScreen({ profile, existingGroups, onSelected 
       {existingGroups.length > 0 && (
         <div className="space-y-2">
           <p className="text-xs text-gray-400 font-semibold px-1 uppercase tracking-wide">参加中のグループ</p>
-          {existingGroups.map((entry) => (
+          {existingGroups.map((entry, i) => (
             <button
               key={entry.group.group_id}
               onClick={() => handleSelect(entry)}
               className="w-full text-left bg-white border-2 border-gray-100 rounded-2xl p-4 flex items-center justify-between active:border-brand-green transition-colors"
             >
-              <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                {ACTIVE_THEME === "guam" && (
+                  <GuamAccent index={i} className="w-7 h-7 shrink-0 opacity-70" />
+                )}
+                <div className="flex-1 min-w-0">
                 <p className="font-bold text-gray-800 truncate">
                   {entry.trip?.title ?? "旅行なし"}
                 </p>
@@ -203,6 +212,7 @@ export default function GroupSelectScreen({ profile, existingGroups, onSelected 
                   メンバー {entry.members.length}人
                   {entry.trip ? ` ／ ✈️ 進行中` : " ／ 旅行なし"}
                 </p>
+                </div>
               </div>
               <span className="text-gray-300 text-2xl ml-2">›</span>
             </button>

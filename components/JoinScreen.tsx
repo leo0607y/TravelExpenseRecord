@@ -5,6 +5,8 @@ import type { LiffProfile, Group, User, Trip } from "@/types";
 import { ACTIVE_THEME } from "@/lib/theme";
 import HulaDancer from "./guam-illustrations/HulaDancer";
 import PalmSunset from "./guam-illustrations/PalmSunset";
+import LatteStone from "./guam-illustrations/LatteStone";
+import Seashell from "./guam-illustrations/Seashell";
 
 interface Props {
   profile: LiffProfile;
@@ -125,6 +127,7 @@ export default function JoinScreen({ profile, onJoined }: Props) {
   if (mode === "create") {
     return (
       <div className="w-full max-w-sm space-y-4">
+        {ACTIVE_THEME === "guam" && <LatteStone className="w-10 h-14 mx-auto" />}
         <p className="text-center font-bold text-gray-800">グループを作成する</p>
         <p className="text-sm text-gray-500 text-center">あなたが管理者になります。招待コードをメンバーに共有してください。</p>
         {error && <p className="text-red-500 text-sm text-center">{error}</p>}
@@ -144,6 +147,7 @@ export default function JoinScreen({ profile, onJoined }: Props) {
 
   return (
     <div className="w-full max-w-sm space-y-4">
+      {ACTIVE_THEME === "guam" && <Seashell className="w-14 h-12 mx-auto" />}
       <p className="text-center font-bold text-gray-800">招待コードで参加する</p>
       {error && <p className="text-red-500 text-sm text-center">{error}</p>}
       <input
