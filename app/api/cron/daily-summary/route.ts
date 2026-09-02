@@ -4,7 +4,7 @@ import { sendLinePush } from "@/lib/line";
 
 /**
  * GET /api/cron/daily-summary
- * Vercel Cronから毎晩22:00 JST（13:00 UTC）に呼び出される
+ * 毎晩21:00 JST（12:00 UTC）にQStashから呼び出される
  */
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");

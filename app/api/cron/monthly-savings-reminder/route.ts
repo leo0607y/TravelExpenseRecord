@@ -4,7 +4,7 @@ import { sendLinePush } from "@/lib/line";
 
 /**
  * GET /api/cron/monthly-savings-reminder
- * Vercel Cronから毎月20日 9:00 JST（0:00 UTC）に呼び出される
+ * 毎月20日 9:00 JST（0:00 UTC）にQStashから呼び出される
  */
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");

@@ -5,9 +5,8 @@ import { sendLinePush } from "@/lib/line";
 /**
  * GET /api/cron/reminders
  * 送信予定時刻を過ぎた未送信のリマインダーをLINEへ送る。
- * Vercel Hobbyプランのcronは1日1回しか実行されないため、
- * .github/workflows/reminder-cron.yml のGitHub Actionsから
- * 数分おきに呼び出す運用にしている。
+ * Upstash QStashから1分おきに呼び出される
+ * （.github/workflows/cron-jobs.ymlのschedule実行はバックアップ用）。
  */
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
