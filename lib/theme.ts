@@ -2,7 +2,7 @@ export type ThemeName = "default" | "guam" | "korea";
 
 // 手動で特定テーマに固定したい場合はここを書き換えてデプロイする（自動切り替えより優先）。
 // 通常は null のままにしておくこと。旅行が全て終わったら "default" にする。
-const MANUAL_OVERRIDE: ThemeName | null = null;
+const MANUAL_OVERRIDE: ThemeName | null = "korea";
 
 // 自動切り替えスケジュール（日本時間基準、比較はUTCで行う）
 // 　〜9/8 06:00 JST      : グアムテーマ

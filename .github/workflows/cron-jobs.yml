@@ -1,0 +1,53 @@
+name: Cron Jobs
+
+# Vercel Hobbyプランのcronが実発火しないため、GitHub Actionsから定時にエンドポイントを呼び出す。
+# 3本のワークフローに分かれていたものを1本に統合し、スケジュールごとにジョブを出し分ける。
+on:
+  schedule:
+    - cron: "* * * * *"  # リマインダー確認（1分おき。GitHub Actions仕様上、実際の間隔は最短でも5分程度になる）
+    - cron: "0 13 * * *"   # 本日の支出サマリー（22:00 JST）
+    - cron: "0 0 20 * *"   # 月次積立リマインド（毎月20日 9:00 JST）
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "手動実行するジョブ"
+        required: true
+        type: choice
+        options:
+          - reminders
+          - daily-summary
+          - monthly-savings-reminder
+
+jobs:
+  reminders:
+    if: |
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'reminders') ||
+      (github.event_name == 'schedule' && github.event.schedule == '* * * * *')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call reminders endpoint
+        run: |
+          curl -fsS -X GET "https://travel-expense-record.vercel.app/api/cron/reminders" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+
+  daily-summary:
+    if: |
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'daily-summary') ||
+      (github.event_name == 'schedule' && github.event.schedule == '0 13 * * *')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call daily-summary endpoint
+        run: |
+          curl -fsS -X GET "https://travel-expense-record.vercel.app/api/cron/daily-summary" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+
+  monthly-savings-reminder:
+    if: |
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'monthly-savings-reminder') ||
+      (github.event_name == 'schedule' && github.event.schedule == '0 0 20 * *')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call monthly-savings-reminder endpoint
+        run: |
+          curl -fsS -X GET "https://travel-expense-record.vercel.app/api/cron/monthly-savings-reminder" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
