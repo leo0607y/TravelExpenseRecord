@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import type { LiffProfile, Group, User, Trip } from "@/types";
+import { ACTIVE_THEME } from "@/lib/theme";
+import HulaDancer from "./guam-illustrations/HulaDancer";
+import PalmSunset from "./guam-illustrations/PalmSunset";
 
 interface Props {
   profile: LiffProfile;
@@ -70,6 +73,9 @@ export default function JoinScreen({ profile, onJoined }: Props) {
   if (createdCode && pendingJoin) {
     return (
       <div className="w-full max-w-sm space-y-5 text-center">
+        {ACTIVE_THEME === "guam" && (
+          <PalmSunset className="w-24 h-28 mx-auto" />
+        )}
         <div>
           <p className="text-lg font-bold text-gray-800">グループを作成しました！</p>
           <p className="text-sm text-gray-500 mt-1">このコードをメンバーに共有してください</p>
@@ -94,6 +100,9 @@ export default function JoinScreen({ profile, onJoined }: Props) {
     return (
       <div className="w-full max-w-sm space-y-5">
         <div className="text-center">
+          {ACTIVE_THEME === "guam" && (
+            <HulaDancer className="w-14 h-16 mx-auto" />
+          )}
           <p className="text-2xl font-bold text-gray-800">Tabi-Pay</p>
           <p className="text-sm text-gray-500 mt-1">旅行グループを設定してください</p>
         </div>

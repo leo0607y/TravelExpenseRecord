@@ -70,29 +70,9 @@
   border-top: 2px solid #ffd27a;
 }
 
-/* 白カードに柔らかいリゾート感のある影＋隅に南国モチーフのウォーターマーク。
-   カード（div）自身の内部に絶対配置するので、画面に張り付かずカードと一緒にスクロールする。
-   ボタンやリンクを巻き込まないよう div に限定している。 */
+/* 白カードに柔らかいリゾート感のある影。
+   手描きイラストは各コンポーネント内でSVGとして配置する（components/guam-illustrations/）。 */
 [data-theme="guam"] div.bg-white.rounded-2xl {
   position: relative;
   box-shadow: 0 2px 12px rgba(0, 150, 160, 0.14);
-}
-[data-theme="guam"] div.bg-white.rounded-2xl::after {
-  content: "🌺";
-  position: absolute;
-  bottom: 6px;
-  right: 10px;
-  font-size: 14px;
-  opacity: 0.3;
-  pointer-events: none;
-}
-/* 波（海）／ファイヤーダンス／フラダンスをカードごとに順番に添える */
-[data-theme="guam"] div.bg-white.rounded-2xl:nth-of-type(2n)::after {
-  content: "🌊";
-}
-[data-theme="guam"] div.bg-white.rounded-2xl:nth-of-type(3n)::after {
-  content: "🔥";
-}
-[data-theme="guam"] div.bg-white.rounded-2xl:nth-of-type(4n)::after {
-  content: "💃";
 }

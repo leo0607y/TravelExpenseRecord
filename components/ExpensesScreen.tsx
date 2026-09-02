@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useLiff } from "./LiffProvider";
+import { ACTIVE_THEME } from "@/lib/theme";
+import OceanWave from "./guam-illustrations/OceanWave";
 import type { Expense, SettlementRoute } from "@/types";
 
 type ExpenseWithDetails = Expense & {
@@ -118,7 +120,10 @@ export default function ExpensesScreen() {
       {/* 支出カード一覧 */}
       <div className="px-4 mt-4 space-y-3">
         {expenses.length === 0 && (
-          <p className="text-center text-gray-400 py-12">支出がまだありません</p>
+          <div className="text-center py-12">
+            {ACTIVE_THEME === "guam" && <OceanWave className="w-32 h-14 mx-auto mb-2 opacity-80" />}
+            <p className="text-gray-400">支出がまだありません</p>
+          </div>
         )}
         {expenses.map((e) => (
           <div key={e.expense_id} className="bg-white rounded-2xl shadow-sm overflow-hidden">

@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useLiff } from "./LiffProvider";
+import { ACTIVE_THEME } from "@/lib/theme";
+import HibiscusFlower from "./guam-illustrations/HibiscusFlower";
 import type { Trip, Expense } from "@/types";
 
 type ExpenseWithPayer = Expense & { payer: { display_name: string } };
@@ -72,7 +74,10 @@ export default function HistoryScreen() {
 
       <div className="px-4 mt-4 space-y-3">
         {trips.length === 0 && (
-          <p className="text-center text-gray-400 py-12">過去の旅行はまだありません</p>
+          <div className="text-center py-12">
+            {ACTIVE_THEME === "guam" && <HibiscusFlower className="w-10 h-10 mx-auto mb-2 opacity-80" />}
+            <p className="text-gray-400">過去の旅行はまだありません</p>
+          </div>
         )}
         {trips.map((trip) => {
           const tripTotal = (trip.expenses ?? []).reduce((s, e) => s + e.amount, 0);

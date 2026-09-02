@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useLiff } from "./LiffProvider";
 import GuamMascot from "./GuamMascot";
+import HulaDancer from "./guam-illustrations/HulaDancer";
 import { ACTIVE_THEME } from "@/lib/theme";
 import type { Expense, Saving, Trip } from "@/types";
 
@@ -222,7 +223,10 @@ export default function HomeScreen() {
         </div>
 
         {/* メンバー積立ステータス */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
+        <div className="bg-white rounded-2xl p-4 shadow-sm relative overflow-hidden">
+          {ACTIVE_THEME === "guam" && (
+            <HulaDancer className="absolute -top-2 right-3 w-10 h-14 opacity-70 pointer-events-none" />
+          )}
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs text-gray-500">👥 メンバー積立状況</p>
             <Link href="/savings" className="text-xs text-brand-green underline">一覧を見る</Link>

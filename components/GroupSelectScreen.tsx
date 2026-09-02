@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 import type { LiffProfile, Group, User, Trip } from "@/types";
+import { ACTIVE_THEME } from "@/lib/theme";
+import HulaDancer from "./guam-illustrations/HulaDancer";
+import HibiscusFlower from "./guam-illustrations/HibiscusFlower";
+import PalmSunset from "./guam-illustrations/PalmSunset";
 
 interface GroupEntry {
   user: User;
@@ -93,6 +97,9 @@ export default function GroupSelectScreen({ profile, existingGroups, onSelected 
   if (createdCode && pendingEntry) {
     return (
       <div className="w-full max-w-sm space-y-5 text-center">
+        {ACTIVE_THEME === "guam" && (
+          <PalmSunset className="w-24 h-28 mx-auto" />
+        )}
         <p className="text-lg font-bold text-gray-800">グループを作成しました！</p>
         <p className="text-sm text-gray-500">このコードをメンバーに共有してください</p>
         <div className="bg-gray-100 rounded-2xl p-6">
@@ -163,7 +170,13 @@ export default function GroupSelectScreen({ profile, existingGroups, onSelected 
   // メイン：グループ一覧
   return (
     <div className="w-full max-w-sm space-y-4">
-      <div className="text-center">
+      <div className="text-center relative">
+        {ACTIVE_THEME === "guam" && (
+          <>
+            <HulaDancer className="w-14 h-16 mx-auto" />
+            <HibiscusFlower className="w-8 h-8 absolute top-0 right-4 opacity-80" />
+          </>
+        )}
         <p className="text-2xl font-bold text-gray-800">Tabi-Pay</p>
         <p className="text-sm text-gray-500 mt-1">
           {existingGroups.length > 0 ? "どのグループで使いますか？" : "グループを設定してください"}

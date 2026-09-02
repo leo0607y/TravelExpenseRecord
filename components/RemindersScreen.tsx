@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useLiff } from "./LiffProvider";
+import { ACTIVE_THEME } from "@/lib/theme";
+import OceanWave from "./guam-illustrations/OceanWave";
 import type { Reminder } from "@/types";
 
 const MAX_MESSAGE_LENGTH = 300;
@@ -180,7 +182,10 @@ export default function RemindersScreen() {
         <div className="bg-white rounded-2xl p-4 shadow-sm">
           <p className="text-xs text-gray-500 mb-3">⏰ 送信予定</p>
           {pending.length === 0 && (
-            <p className="text-sm text-gray-400 text-center py-4">予定中のリマインダーはありません</p>
+            <div className="text-center py-4">
+              {ACTIVE_THEME === "guam" && <OceanWave className="w-24 h-10 mx-auto mb-1 opacity-80" />}
+              <p className="text-sm text-gray-400">予定中のリマインダーはありません</p>
+            </div>
           )}
           <div className="space-y-2">
             {pending.map((r) => {
