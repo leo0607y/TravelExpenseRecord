@@ -27,6 +27,14 @@ import BeachUmbrella from "./BeachUmbrella";
 import Flamingo from "./Flamingo";
 import Popsicle from "./Popsicle";
 import StrawHat from "./StrawHat";
+import Mango from "./Mango";
+import FlipFlops from "./FlipFlops";
+import SnorkelMask from "./SnorkelMask";
+import BeachBall from "./BeachBall";
+import Lei from "./Lei";
+import IceCream from "./IceCream";
+import Sailboat from "./Sailboat";
+import TropicalBird from "./TropicalBird";
 
 export {
   HulaDancer,
@@ -58,6 +66,14 @@ export {
   Flamingo,
   Popsicle,
   StrawHat,
+  Mango,
+  FlipFlops,
+  SnorkelMask,
+  BeachBall,
+  Lei,
+  IceCream,
+  Sailboat,
+  TropicalBird,
 };
 
 export const GUAM_ICONS = [
@@ -90,4 +106,12 @@ export const GUAM_ICONS = [
   Flamingo,
   Popsicle,
   StrawHat,
+  Mango,
+  FlipFlops,
+  SnorkelMask,
+  BeachBall,
+  Lei,
+  IceCream,
+  Sailboat,
+  TropicalBird,
 ] as const;

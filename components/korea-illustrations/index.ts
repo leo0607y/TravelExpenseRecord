@@ -15,6 +15,14 @@ import KoreaAirplane from "./KoreaAirplane";
 import Bibimbap from "./Bibimbap";
 import Banchan from "./Banchan";
 import HanbokCouple from "./HanbokCouple";
+import Gimbap from "./Gimbap";
+import FriedChicken from "./FriedChicken";
+import Bingsu from "./Bingsu";
+import Bungeoppang from "./Bungeoppang";
+import LotusLantern from "./LotusLantern";
+import CherryBlossom from "./CherryBlossom";
+import JindoDog from "./JindoDog";
+import Makgeolli from "./Makgeolli";
 
 export {
   HanbokDancer,
@@ -34,6 +42,14 @@ export {
   Bibimbap,
   Banchan,
   HanbokCouple,
+  Gimbap,
+  FriedChicken,
+  Bingsu,
+  Bungeoppang,
+  LotusLantern,
+  CherryBlossom,
+  JindoDog,
+  Makgeolli,
 };
 
 export const KOREA_ICONS = [
@@ -54,4 +70,12 @@ export const KOREA_ICONS = [
   Bibimbap,
   Banchan,
   HanbokCouple,
+  Gimbap,
+  FriedChicken,
+  Bingsu,
+  Bungeoppang,
+  LotusLantern,
+  CherryBlossom,
+  JindoDog,
+  Makgeolli,
 ] as const;
