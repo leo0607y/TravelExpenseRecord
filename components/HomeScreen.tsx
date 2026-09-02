@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useLiff } from "./LiffProvider";
+import GuamMascot from "./GuamMascot";
+import { ACTIVE_THEME } from "@/lib/theme";
 import type { Expense, Saving, Trip } from "@/types";
 
 interface TripData {
@@ -186,12 +188,15 @@ export default function HomeScreen() {
 
       <div className="p-4 space-y-4">
         {/* 総支出カード */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
+        <div className="bg-white rounded-2xl p-4 shadow-sm relative overflow-hidden">
           <p className="text-xs text-gray-500">🎉 ワクワク総支出</p>
           <p className="text-3xl font-bold text-gray-800 mt-1">¥{totalExpenses.toLocaleString()}</p>
           <p className="text-sm text-gray-500 mt-1">
             💳 共通カード ¥{totalCard.toLocaleString()} ／ 💴 立替 ¥{totalCash.toLocaleString()}
           </p>
+          {ACTIVE_THEME === "guam" && (
+            <GuamMascot className="absolute -bottom-1 right-2 w-12 h-12 opacity-80 pointer-events-none" />
+          )}
         </div>
 
         {/* プール残高カード */}

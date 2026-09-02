@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import LiffProvider from "@/components/LiffProvider";
-import ResortDecorations from "@/components/ResortDecorations";
 import { ACTIVE_THEME } from "@/lib/theme";
 
 export const metadata: Metadata = {
@@ -19,7 +18,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ja" data-theme={ACTIVE_THEME === "guam" ? "guam" : undefined}>
       <body className="bg-gray-50 max-w-md mx-auto">
-        <ResortDecorations />
         <LiffProvider>{children}</LiffProvider>
       </body>
     </html>
