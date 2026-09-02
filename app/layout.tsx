@@ -1,10 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import "./globals.css";
 import LiffProvider from "@/components/LiffProvider";
-import { ThemeProvider } from "@/components/ThemeProvider";
-import ThemeToggleButton from "@/components/ThemeToggleButton";
 import ResortDecorations from "@/components/ResortDecorations";
+import { ACTIVE_THEME } from "@/lib/theme";
 
 export const metadata: Metadata = {
   title: "Tabi-Pay",
@@ -17,29 +15,12 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
-// 初回描画前にテーマを適用し、切り替え時のちらつきを防ぐ
-const themeInitScript = `
-(function () {
-  try {
-    if (window.localStorage.getItem("tabipay-theme") === "guam") {
-      document.documentElement.setAttribute("data-theme", "guam");
-    }
-  } catch (e) {}
-})();
-`;
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ja" suppressHydrationWarning>
+    <html lang="ja" data-theme={ACTIVE_THEME === "guam" ? "guam" : undefined}>
       <body className="bg-gray-50 max-w-md mx-auto">
-        <Script id="theme-init" strategy="beforeInteractive">
-          {themeInitScript}
-        </Script>
-        <ThemeProvider>
-          <ResortDecorations />
-          <ThemeToggleButton />
-          <LiffProvider>{children}</LiffProvider>
-        </ThemeProvider>
+        <ResortDecorations />
+        <LiffProvider>{children}</LiffProvider>
       </body>
     </html>
   );
