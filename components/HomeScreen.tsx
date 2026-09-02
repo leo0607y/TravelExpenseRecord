@@ -187,8 +187,7 @@ export default function HomeScreen() {
             </button>
           </div>
         </div>
-        <ThemeAccentStrip count={10} start={0} className="mt-3 opacity-50" itemClassName="w-7 h-7" />
-        <ThemeAccentStrip count={12} start={10} className="mt-1.5 opacity-35" itemClassName="w-6 h-6" />
+        <ThemeAccentStrip count={9} start={0} className="mt-3 opacity-45" itemClassName="w-7 h-7" />
       </div>
 
       <div className="p-4 space-y-4">
@@ -481,7 +480,7 @@ export default function HomeScreen() {
         )}
 
         {/* 締めの装飾 */}
-        <ThemeAccentStrip count={10} start={2} className="pt-1 pb-2 opacity-60" itemClassName="w-7 h-7" />
+        <ThemeAccentStrip count={9} start={2} className="pt-1 pb-2 opacity-60" itemClassName="w-7 h-7" />
       </div>
 
       {/* 固定フッター */}

@@ -104,8 +104,7 @@ export default function SettleScreen() {
           <button onClick={() => router.back()} className="text-white">←</button>
           <h1 className="text-lg font-bold">🏁 旅行を締める・精算</h1>
         </div>
-        <ThemeAccentStrip count={10} start={5} className="mt-3 opacity-50" itemClassName="w-7 h-7" />
-        <ThemeAccentStrip count={12} start={15} className="mt-1.5 opacity-35" itemClassName="w-6 h-6" />
+        <ThemeAccentStrip count={9} start={5} className="mt-3 opacity-45" itemClassName="w-7 h-7" />
       </div>
 
       <div className="p-4 space-y-4">

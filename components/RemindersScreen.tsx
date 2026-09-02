@@ -164,8 +164,7 @@ export default function RemindersScreen() {
             {activeTrip && <p className="text-xs opacity-80">{activeTrip.title}</p>}
           </div>
         </div>
-        <ThemeAccentStrip count={10} start={9} className="mt-3 opacity-50" itemClassName="w-7 h-7" />
-        <ThemeAccentStrip count={12} start={19} className="mt-1.5 opacity-35" itemClassName="w-6 h-6" />
+        <ThemeAccentStrip count={9} start={9} className="mt-3 opacity-45" itemClassName="w-7 h-7" />
       </div>
 
       <div className="p-4 space-y-4">
