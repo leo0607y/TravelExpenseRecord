@@ -6,6 +6,7 @@ import { useLiff } from "./LiffProvider";
 import { useTheme } from "@/lib/theme-context";
 import HibiscusFlower from "./guam-illustrations/HibiscusFlower";
 import GuamAccent from "./guam-illustrations/GuamAccent";
+import ThemeAccentStrip from "./ThemeAccentStrip";
 import MapleLeaf from "./korea-illustrations/MapleLeaf";
 import KoreaAccent from "./korea-illustrations/KoreaAccent";
 import type { Trip, Expense } from "@/types";
@@ -71,9 +72,12 @@ export default function HistoryScreen() {
   return (
     <div className="min-h-screen bg-gray-50 pb-8">
       {/* ヘッダー */}
-      <div className="bg-brand-green text-white px-4 py-4 flex items-center gap-3">
-        <button onClick={() => router.back()} className="text-white text-lg">←</button>
-        <h1 className="text-lg font-bold">旅の履歴</h1>
+      <div className="bg-brand-green text-white px-4 py-4">
+        <div className="flex items-center gap-3">
+          <button onClick={() => router.back()} className="text-white text-lg">←</button>
+          <h1 className="text-lg font-bold">旅の履歴</h1>
+        </div>
+        <ThemeAccentStrip count={9} start={6} className="mt-3 opacity-45" itemClassName="w-7 h-7" />
       </div>
 
       <div className="px-4 mt-4 space-y-3">

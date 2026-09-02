@@ -7,9 +7,9 @@ import { useLiff } from "./LiffProvider";
 import GuamMascot from "./GuamMascot";
 import KoreaMascot from "./KoreaMascot";
 import HulaDancer from "./guam-illustrations/HulaDancer";
-import GuamAccent from "./guam-illustrations/GuamAccent";
 import HanbokDancer from "./korea-illustrations/HanbokDancer";
-import KoreaAccent from "./korea-illustrations/KoreaAccent";
+import ThemeAccent from "./ThemeAccent";
+import ThemeAccentStrip from "./ThemeAccentStrip";
 import { useTheme } from "@/lib/theme-context";
 import type { Expense, Saving, Trip } from "@/types";
 
@@ -187,20 +187,25 @@ export default function HomeScreen() {
             </button>
           </div>
         </div>
+        <ThemeAccentStrip count={9} start={0} className="mt-3 opacity-45" itemClassName="w-7 h-7" />
       </div>
 
       <div className="p-4 space-y-4">
         {/* リマインダー */}
         <Link
           href="/reminders"
-          className="block w-full text-center bg-white border-2 border-brand-green text-brand-green rounded-2xl py-3 font-bold shadow-sm"
+          className="relative overflow-hidden block w-full text-center bg-white border-2 border-brand-green text-brand-green rounded-2xl py-3 font-bold shadow-sm"
         >
+          <ThemeAccent index={9} className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 opacity-40 pointer-events-none" />
           🔔 リマインダーを見る・予約する
+          <ThemeAccent index={13} className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 opacity-40 pointer-events-none" />
         </Link>
 
         {/* 総支出カード */}
         <div className="bg-white rounded-2xl p-4 shadow-sm relative overflow-hidden">
-          <p className="text-xs text-gray-500">🎉 ワクワク総支出</p>
+          <ThemeAccent index={3} className="absolute -left-2 -top-2 w-12 h-12 opacity-20 pointer-events-none" />
+          <ThemeAccent index={7} className="absolute right-16 top-2 w-9 h-9 opacity-25 pointer-events-none" />
+          <p className="text-xs text-gray-500 relative">🎉 ワクワク総支出</p>
           <p className="text-3xl font-bold text-gray-800 mt-1">¥{totalExpenses.toLocaleString()}</p>
           <p className="text-sm text-gray-500 mt-1">
             💳 共通カード ¥{totalCard.toLocaleString()} ／ 💴 立替 ¥{totalCash.toLocaleString()}
@@ -215,13 +220,10 @@ export default function HomeScreen() {
 
         {/* プール残高カード */}
         <div className="bg-white rounded-2xl p-4 shadow-sm relative overflow-hidden">
-          {theme === "guam" && (
-            <GuamAccent index={2} className="absolute -right-2 -bottom-2 w-10 h-10 opacity-20 pointer-events-none" />
-          )}
-          {theme === "korea" && (
-            <KoreaAccent index={2} className="absolute -right-2 -bottom-2 w-10 h-10 opacity-20 pointer-events-none" />
-          )}
-          <p className="text-xs text-gray-500">💰 口座プール残高</p>
+          <ThemeAccent index={2} className="absolute -right-2 -bottom-2 w-12 h-12 opacity-20 pointer-events-none" />
+          <ThemeAccent index={5} className="absolute right-14 -top-1 w-9 h-9 opacity-20 pointer-events-none" />
+          <ThemeAccent index={11} className="absolute -left-2 bottom-6 w-9 h-9 opacity-15 pointer-events-none" />
+          <p className="text-xs text-gray-500 relative">💰 口座プール残高</p>
           <p className={`text-2xl font-bold mt-1 ${poolBalance < 0 ? "text-red-600" : "text-blue-600"}`}>
             ¥{poolBalance.toLocaleString()}
           </p>
@@ -249,7 +251,9 @@ export default function HomeScreen() {
           {theme === "korea" && (
             <HanbokDancer className="absolute -top-2 right-3 w-10 h-14 opacity-70 pointer-events-none" />
           )}
-          <div className="flex items-center justify-between mb-3">
+          <ThemeAccent index={6} className="absolute -left-2 -bottom-2 w-12 h-12 opacity-15 pointer-events-none" />
+          <ThemeAccent index={12} className="absolute right-16 -bottom-1 w-9 h-9 opacity-15 pointer-events-none" />
+          <div className="flex items-center justify-between mb-3 relative">
             <p className="text-xs text-gray-500">👥 メンバー積立状況</p>
             <Link href="/savings" className="text-xs text-brand-green underline">一覧を見る</Link>
           </div>
@@ -377,10 +381,14 @@ export default function HomeScreen() {
         </div>
 
         {/* 支出履歴 */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <p className="text-xs text-gray-500 mb-3">📋 支出履歴</p>
+        <div className="bg-white rounded-2xl p-4 shadow-sm relative overflow-hidden">
+          <ThemeAccent index={8} className="absolute -right-2 -top-2 w-12 h-12 opacity-15 pointer-events-none" />
+          <p className="text-xs text-gray-500 mb-3 relative">📋 支出履歴</p>
           {expenses.length === 0 && (
-            <p className="text-sm text-gray-400 text-center py-4">支出がまだありません</p>
+            <div className="py-4">
+              <p className="text-sm text-gray-400 text-center">支出がまだありません</p>
+              <ThemeAccentStrip count={6} start={4} className="mt-3 opacity-50" itemClassName="w-8 h-8" />
+            </div>
           )}
           <div className="space-y-2">
             {expenses.map((e, i) => (
@@ -391,12 +399,7 @@ export default function HomeScreen() {
                 >
                   <div className="flex items-center justify-between py-2 border-b border-gray-100">
                     <div className="flex items-center gap-2 min-w-0">
-                      {theme === "guam" && (
-                        <GuamAccent index={i} className="w-5 h-5 shrink-0 opacity-70" />
-                      )}
-                      {theme === "korea" && (
-                        <KoreaAccent index={i} className="w-5 h-5 shrink-0 opacity-70" />
-                      )}
+                      <ThemeAccent index={i} className="w-6 h-6 shrink-0 opacity-80" />
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-gray-800 truncate">
                           {e.title}{e.image_url && " 📸"}
@@ -471,6 +474,9 @@ export default function HomeScreen() {
             </button>
           )
         )}
+
+        {/* 締めの装飾 */}
+        <ThemeAccentStrip count={10} start={2} className="pt-1 pb-2 opacity-60" itemClassName="w-7 h-7" />
       </div>
 
       {/* 固定フッター */}

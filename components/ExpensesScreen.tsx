@@ -6,6 +6,7 @@ import { useLiff } from "./LiffProvider";
 import { useTheme } from "@/lib/theme-context";
 import OceanWave from "./guam-illustrations/OceanWave";
 import GuamAccent from "./guam-illustrations/GuamAccent";
+import ThemeAccentStrip from "./ThemeAccentStrip";
 import Fan from "./korea-illustrations/Fan";
 import KoreaAccent from "./korea-illustrations/KoreaAccent";
 import type { Expense, SettlementRoute } from "@/types";
@@ -72,12 +73,15 @@ export default function ExpensesScreen() {
   return (
     <div className="min-h-screen bg-gray-50 pb-8">
       {/* ヘッダー */}
-      <div className="bg-brand-green text-white px-4 py-4 flex items-center gap-3">
-        <button onClick={() => router.back()} className="text-white text-lg">←</button>
-        <div>
-          <h1 className="text-lg font-bold">支出一覧</h1>
-          {activeTrip && <p className="text-xs opacity-80">{activeTrip.title}</p>}
+      <div className="bg-brand-green text-white px-4 py-4">
+        <div className="flex items-center gap-3">
+          <button onClick={() => router.back()} className="text-white text-lg">←</button>
+          <div>
+            <h1 className="text-lg font-bold">支出一覧</h1>
+            {activeTrip && <p className="text-xs opacity-80">{activeTrip.title}</p>}
+          </div>
         </div>
+        <ThemeAccentStrip count={9} start={3} className="mt-3 opacity-45" itemClassName="w-7 h-7" />
       </div>
 
       {/* 合計サマリー */}

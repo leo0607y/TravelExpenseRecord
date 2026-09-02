@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useLiff } from "@/components/LiffProvider";
 import { useTheme } from "@/lib/theme-context";
 import GuamAccent from "@/components/guam-illustrations/GuamAccent";
+import ThemeAccentStrip from "@/components/ThemeAccentStrip";
 import Seashell from "@/components/guam-illustrations/Seashell";
 import KoreaAccent from "@/components/korea-illustrations/KoreaAccent";
 import Taegeuk from "@/components/korea-illustrations/Taegeuk";
@@ -77,6 +78,7 @@ export default function SavingsPage() {
           <h1 className="text-lg font-bold">積立一覧</h1>
         </div>
         <p className="text-xs opacity-70 mt-1">全旅行の積立履歴</p>
+        <ThemeAccentStrip count={9} start={12} className="mt-3 opacity-45" itemClassName="w-7 h-7" />
       </div>
 
       <div className="p-4 space-y-4">

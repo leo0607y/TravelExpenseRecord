@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useLiff } from "./LiffProvider";
 import { useTheme } from "@/lib/theme-context";
 import GuamAccent from "./guam-illustrations/GuamAccent";
+import ThemeAccent from "./ThemeAccent";
+import ThemeAccentStrip from "./ThemeAccentStrip";
 import KoreaAccent from "./korea-illustrations/KoreaAccent";
 import type { TripSummary, Expense } from "@/types";
 
@@ -97,15 +99,20 @@ export default function SettleScreen() {
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       {/* ヘッダー */}
-      <div className="bg-red-500 text-white px-4 py-4 flex items-center gap-3">
-        <button onClick={() => router.back()} className="text-white">←</button>
-        <h1 className="text-lg font-bold">🏁 旅行を締める・精算</h1>
+      <div className="bg-red-500 text-white px-4 py-4">
+        <div className="flex items-center gap-3">
+          <button onClick={() => router.back()} className="text-white">←</button>
+          <h1 className="text-lg font-bold">🏁 旅行を締める・精算</h1>
+        </div>
+        <ThemeAccentStrip count={9} start={5} className="mt-3 opacity-45" itemClassName="w-7 h-7" />
       </div>
 
       <div className="p-4 space-y-4">
         {/* 総支出サマリー */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
-          <p className="text-xs text-gray-500">今回の旅行の総支出 🎉</p>
+        <div className="bg-white rounded-2xl p-4 shadow-sm text-center relative overflow-hidden">
+          <ThemeAccent index={4} className="absolute -left-2 -top-2 w-12 h-12 opacity-15 pointer-events-none" />
+          <ThemeAccent index={10} className="absolute -right-2 -bottom-2 w-12 h-12 opacity-15 pointer-events-none" />
+          <p className="text-xs text-gray-500 relative">今回の旅行の総支出 🎉</p>
           <p className="text-4xl font-black text-gray-800 mt-1">
             ¥{summary.total_expenses.toLocaleString()}
           </p>
@@ -175,10 +182,10 @@ export default function SettleScreen() {
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         {theme === "guam" && (
-                          <GuamAccent index={i} className="w-5 h-5 shrink-0 opacity-70" />
+                          <GuamAccent index={i} className="w-6 h-6 shrink-0 opacity-80" />
                         )}
                         {theme === "korea" && (
-                          <KoreaAccent index={i} className="w-5 h-5 shrink-0 opacity-70" />
+                          <KoreaAccent index={i} className="w-6 h-6 shrink-0 opacity-80" />
                         )}
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-gray-800 truncate">{e.title}</p>
@@ -222,10 +229,10 @@ export default function SettleScreen() {
                   <div className="flex justify-between text-sm mb-1">
                     <span className="flex items-center gap-1">
                       {theme === "guam" && (
-                        <GuamAccent index={i} className="w-5 h-5 opacity-70" />
+                        <GuamAccent index={i} className="w-6 h-6 opacity-80" />
                       )}
                       {theme === "korea" && (
-                        <KoreaAccent index={i} className="w-5 h-5 opacity-70" />
+                        <KoreaAccent index={i} className="w-6 h-6 opacity-80" />
                       )}
                       {emoji} {m.display_name}
                     </span>
