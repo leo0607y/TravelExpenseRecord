@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, useRef } from "react";
+import { createContext, useContext, useState, useCallback, useRef, useEffect } from "react";
 import Script from "next/script";
 import type { LiffProfile, Group, User, Trip } from "@/types";
 import GroupSelectScreen from "./GroupSelectScreen";
@@ -60,6 +60,38 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
   const [members, setMembers] = useState<User[]>([]);
   const [activeTrip, setActiveTrip] = useState<Trip | null>(null);
   const initCalled = useRef(false);
+
+  // 開発サーバーでNEXT_PUBLIC_LIFF_IDが未設定の場合、LINEログインなしで
+  // 動作確認できるようにするバイパス（本番ビルドでは絶対に発動しない）
+  const isDevBypass = process.env.NODE_ENV !== "production" && !process.env.NEXT_PUBLIC_LIFF_ID;
+
+  const initDevBypass = useCallback(async () => {
+    if (initCalled.current) return;
+    initCalled.current = true;
+
+    try {
+      const devProfile: LiffProfile = {
+        userId: "dev-local-user",
+        displayName: "開発ユーザー",
+        pictureUrl: undefined,
+      };
+      setProfile(devProfile);
+
+      const res = await fetch(`/api/users/me?userId=${encodeURIComponent(devProfile.userId)}`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(`[開発バイパス] 確認エラー: ${body.error ?? "不明（Supabaseの環境変数が未設定の可能性があります）"}`);
+        return;
+      }
+
+      const { groups } = await res.json();
+      setExistingGroups(groups ?? []);
+      setNeedGroupSelect(true);
+    } catch (e) {
+      initCalled.current = false;
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }, []);
 
   const init = useCallback(async () => {
     if (initCalled.current) return;
@@ -135,8 +167,8 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
     setCurrentUser(null);
     setMembers([]);
     setActiveTrip(null);
-    init();
-  }, [init]);
+    if (isDevBypass) initDevBypass(); else init();
+  }, [init, initDevBypass, isDevBypass]);
 
   // グループ選択画面に戻る（グループ切り替え）
   const switchGroup = useCallback(() => {
@@ -168,14 +200,21 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
     ? currentUser?.user_id === group.approver_id
     : isAdmin;
 
+  // 開発バイパス時はLINEのSDK読み込みを待たずに即座に開始する
+  useEffect(() => {
+    if (isDevBypass) initDevBypass();
+  }, [isDevBypass, initDevBypass]);
+
   return (
     <>
-      <Script
-        src="https://static.line-scdn.net/liff/edge/2/sdk.js"
-        strategy="afterInteractive"
-        onLoad={init}
-        onError={() => setError("LIFF SDK の読み込みに失敗しました")}
-      />
+      {!isDevBypass && (
+        <Script
+          src="https://static.line-scdn.net/liff/edge/2/sdk.js"
+          strategy="afterInteractive"
+          onLoad={init}
+          onError={() => setError("LIFF SDK の読み込みに失敗しました")}
+        />
+      )}
       <Ctx.Provider value={{
         ready, error, profile, group,
         groupId: group?.group_id ?? null,

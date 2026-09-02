@@ -1,3 +1,95 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --brand-green: #06c755;
+  --brand-green-dark: #05a847;
+}
+
+/* =========================================================
+   🌴 グアム（リゾート）テーマ
+   <html data-theme="guam"> が付いている間だけ有効になる。
+   通常テーマに戻すときは data-theme を外すだけで全て復元される。
+========================================================= */
+[data-theme="guam"] {
+  --brand-green: #00b3a4;
+  --brand-green-dark: #008c81;
+}
+
+/* ページ全体の背景：砂浜〜海のグラデーション＋太陽の光
+   （body自身も.bg-gray-50を持つため、それより詳細度の高いセレクタで上書きする） */
+[data-theme="guam"] body.bg-gray-50 {
+  background: radial-gradient(circle at 92% 4%, rgba(255, 196, 84, 0.55), transparent 22%),
+    linear-gradient(180deg, #fff7e8 0%, #e3f8f4 42%, #dcf1fb 100%);
+}
+[data-theme="guam"] .bg-gray-50 {
+  background: transparent;
+}
+
+/* ヘッダー（ブランドカラー背景）に太陽と波の装飾を追加 */
+[data-theme="guam"] .bg-brand-green {
+  background: linear-gradient(120deg, #00c9c2 0%, #0092b0 65%, #0092b0 100%);
+  position: relative;
+  overflow: hidden;
+}
+[data-theme="guam"] .bg-brand-green::before {
+  content: "";
+  position: absolute;
+  top: -28px;
+  right: -16px;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffe08a 0%, #ffb648 62%, rgba(255, 182, 72, 0) 72%);
+  pointer-events: none;
+}
+[data-theme="guam"] .bg-brand-green::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20'%3E%3Cpath d='M0 10 Q25 0 50 10 T100 10 V20 H0 Z' fill='%23ffffff' fill-opacity='0.4'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 90px 14px;
+  pointer-events: none;
+}
+
+/* 締めの精算ヘッダー（赤）はそのまま。警告色は季節を問わず変えない */
+
+/* 固定フッターに南国カラーのライン */
+[data-theme="guam"] .fixed.bottom-0.bg-white {
+  border-top: 2px solid #ffd27a;
+}
+
+/* 白カードに柔らかいリゾート感のある影 */
+[data-theme="guam"] .bg-white.rounded-2xl {
+  box-shadow: 0 2px 12px rgba(0, 150, 160, 0.14);
+}
+
+/* 画面隅の控えめな装飾（ヤシの葉／ハイビスカス）。通常テーマでは非表示 */
+.resort-decor {
+  display: none;
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+}
+[data-theme="guam"] .resort-decor {
+  display: block;
+}
+.resort-decor--palm {
+  left: -14px;
+  bottom: -12px;
+  width: 130px;
+  height: 130px;
+  opacity: 0.5;
+}
+.resort-decor--hibiscus {
+  right: -4px;
+  top: 48px;
+  width: 44px;
+  height: 44px;
+  opacity: 0.85;
+}
