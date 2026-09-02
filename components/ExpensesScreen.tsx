@@ -3,9 +3,11 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useLiff } from "./LiffProvider";
-import { ACTIVE_THEME } from "@/lib/theme";
+import { useTheme } from "@/lib/theme-context";
 import OceanWave from "./guam-illustrations/OceanWave";
 import GuamAccent from "./guam-illustrations/GuamAccent";
+import Fan from "./korea-illustrations/Fan";
+import KoreaAccent from "./korea-illustrations/KoreaAccent";
 import type { Expense, SettlementRoute } from "@/types";
 
 type ExpenseWithDetails = Expense & {
@@ -16,6 +18,7 @@ type ExpenseWithDetails = Expense & {
 export default function ExpensesScreen() {
   const router = useRouter();
   const { activeTrip, currentUser, isAdmin } = useLiff();
+  const { theme } = useTheme();
   const [expenses, setExpenses] = useState<ExpenseWithDetails[]>([]);
   const [settlementRoutes, setSettlementRoutes] = useState<SettlementRoute[]>([]);
   const [loading, setLoading] = useState(true);
@@ -112,8 +115,11 @@ export default function ExpensesScreen() {
                   <span className="font-bold text-brand-green">{r.to_name}</span>
                 </span>
                 <span className="text-sm font-black text-gray-800">¥{r.amount.toLocaleString()}</span>
-                {ACTIVE_THEME === "guam" && (
+                {theme === "guam" && (
                   <GuamAccent index={i} className="absolute -right-1 -bottom-1 w-6 h-6 opacity-20 pointer-events-none" />
+                )}
+                {theme === "korea" && (
+                  <KoreaAccent index={i} className="absolute -right-1 -bottom-1 w-6 h-6 opacity-20 pointer-events-none" />
                 )}
               </div>
             ))}
@@ -125,14 +131,18 @@ export default function ExpensesScreen() {
       <div className="px-4 mt-4 space-y-3">
         {expenses.length === 0 && (
           <div className="text-center py-12">
-            {ACTIVE_THEME === "guam" && <OceanWave className="w-32 h-14 mx-auto mb-2 opacity-80" />}
+            {theme === "guam" && <OceanWave className="w-32 h-14 mx-auto mb-2 opacity-80" />}
+            {theme === "korea" && <Fan className="w-32 h-14 mx-auto mb-2 opacity-80" />}
             <p className="text-gray-400">支出がまだありません</p>
           </div>
         )}
         {expenses.map((e, i) => (
           <div key={e.expense_id} className="relative bg-white rounded-2xl shadow-sm overflow-hidden">
-            {ACTIVE_THEME === "guam" && (
+            {theme === "guam" && (
               <GuamAccent index={i} className="absolute -right-2 -bottom-2 w-10 h-10 opacity-20 pointer-events-none" />
+            )}
+            {theme === "korea" && (
+              <KoreaAccent index={i} className="absolute -right-2 -bottom-2 w-10 h-10 opacity-20 pointer-events-none" />
             )}
             {/* 画像（ある場合は上部に大きく表示） */}
             {e.image_url && (

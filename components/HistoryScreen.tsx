@@ -3,9 +3,11 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useLiff } from "./LiffProvider";
-import { ACTIVE_THEME } from "@/lib/theme";
+import { useTheme } from "@/lib/theme-context";
 import HibiscusFlower from "./guam-illustrations/HibiscusFlower";
 import GuamAccent from "./guam-illustrations/GuamAccent";
+import MapleLeaf from "./korea-illustrations/MapleLeaf";
+import KoreaAccent from "./korea-illustrations/KoreaAccent";
 import type { Trip, Expense } from "@/types";
 
 type ExpenseWithPayer = Expense & { payer: { display_name: string } };
@@ -19,6 +21,7 @@ interface TripWithExpenses extends Trip {
 export default function HistoryScreen() {
   const router = useRouter();
   const { group } = useLiff();
+  const { theme } = useTheme();
   const [trips, setTrips] = useState<TripWithExpenses[]>([]);
   const [loading, setLoading] = useState(true);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
@@ -76,7 +79,8 @@ export default function HistoryScreen() {
       <div className="px-4 mt-4 space-y-3">
         {trips.length === 0 && (
           <div className="text-center py-12">
-            {ACTIVE_THEME === "guam" && <HibiscusFlower className="w-10 h-10 mx-auto mb-2 opacity-80" />}
+            {theme === "guam" && <HibiscusFlower className="w-10 h-10 mx-auto mb-2 opacity-80" />}
+            {theme === "korea" && <MapleLeaf className="w-10 h-10 mx-auto mb-2 opacity-80" />}
             <p className="text-gray-400">過去の旅行はまだありません</p>
           </div>
         )}
@@ -88,8 +92,11 @@ export default function HistoryScreen() {
 
           return (
             <div key={trip.trip_id} className="relative bg-white rounded-2xl shadow-sm overflow-hidden">
-              {ACTIVE_THEME === "guam" && (
+              {theme === "guam" && (
                 <GuamAccent index={tripIndex} className="absolute -right-2 -top-2 w-10 h-10 opacity-20 pointer-events-none" />
+              )}
+              {theme === "korea" && (
+                <KoreaAccent index={tripIndex} className="absolute -right-2 -top-2 w-10 h-10 opacity-20 pointer-events-none" />
               )}
               {/* 旅行ヘッダー（タップで開閉） */}
               <button
@@ -160,8 +167,11 @@ export default function HistoryScreen() {
                                 />
                               </button>
                             )}
-                            {ACTIVE_THEME === "guam" && (
+                            {theme === "guam" && (
                               <GuamAccent index={tripIndex + expenseIndex} className="absolute right-1 top-1 w-6 h-6 opacity-20 pointer-events-none" />
+                            )}
+                            {theme === "korea" && (
+                              <KoreaAccent index={tripIndex + expenseIndex} className="absolute right-1 top-1 w-6 h-6 opacity-20 pointer-events-none" />
                             )}
                             <div className="flex items-center justify-between px-4 py-3">
                               <div className="flex-1 min-w-0">

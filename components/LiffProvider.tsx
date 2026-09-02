@@ -4,8 +4,9 @@ import { createContext, useContext, useState, useCallback, useRef, useEffect } f
 import Script from "next/script";
 import type { LiffProfile, Group, User, Trip } from "@/types";
 import GroupSelectScreen from "./GroupSelectScreen";
-import { ACTIVE_THEME } from "@/lib/theme";
+import { useTheme } from "@/lib/theme-context";
 import PalmSunset from "./guam-illustrations/PalmSunset";
+import Gyeongbokgung from "./korea-illustrations/Gyeongbokgung";
 
 interface GroupEntry {
   user: User;
@@ -51,6 +52,7 @@ export function useLiff() {
 }
 
 export default function LiffProvider({ children }: { children: React.ReactNode }) {
+  const { theme } = useTheme();
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [needLogin, setNeedLogin] = useState(false);
@@ -232,8 +234,11 @@ export default function LiffProvider({ children }: { children: React.ReactNode }
             )}
             {needLogin && !error && (
               <div className="text-center">
-                {ACTIVE_THEME === "guam" && (
+                {theme === "guam" && (
                   <PalmSunset className="w-28 h-32 mx-auto mb-2" />
+                )}
+                {theme === "korea" && (
+                  <Gyeongbokgung className="w-32 h-24 mx-auto mb-2" />
                 )}
                 <p className="text-sm text-gray-500 mb-3">LINEアカウントでのログインが必要です</p>
                 <button

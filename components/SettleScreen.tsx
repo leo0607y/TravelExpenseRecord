@@ -3,8 +3,9 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useLiff } from "./LiffProvider";
-import { ACTIVE_THEME } from "@/lib/theme";
+import { useTheme } from "@/lib/theme-context";
 import GuamAccent from "./guam-illustrations/GuamAccent";
+import KoreaAccent from "./korea-illustrations/KoreaAccent";
 import type { TripSummary, Expense } from "@/types";
 
 type ExpenseWithPayer = Expense & { payer: { display_name: string } };
@@ -12,6 +13,7 @@ type ExpenseWithPayer = Expense & { payer: { display_name: string } };
 export default function SettleScreen() {
   const router = useRouter();
   const { activeTrip, members, isAdmin, reload } = useLiff();
+  const { theme } = useTheme();
   const [summary, setSummary] = useState<TripSummary | null>(null);
   const [expenses, setExpenses] = useState<ExpenseWithPayer[]>([]);
   const [nextTitle, setNextTitle] = useState("次の旅行");
@@ -172,8 +174,11 @@ export default function SettleScreen() {
                   ) : (
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
-                        {ACTIVE_THEME === "guam" && (
+                        {theme === "guam" && (
                           <GuamAccent index={i} className="w-5 h-5 shrink-0 opacity-70" />
+                        )}
+                        {theme === "korea" && (
+                          <KoreaAccent index={i} className="w-5 h-5 shrink-0 opacity-70" />
                         )}
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-gray-800 truncate">{e.title}</p>
@@ -216,8 +221,11 @@ export default function SettleScreen() {
                 <div key={m.user_id}>
                   <div className="flex justify-between text-sm mb-1">
                     <span className="flex items-center gap-1">
-                      {ACTIVE_THEME === "guam" && (
+                      {theme === "guam" && (
                         <GuamAccent index={i} className="w-5 h-5 opacity-70" />
+                      )}
+                      {theme === "korea" && (
+                        <KoreaAccent index={i} className="w-5 h-5 opacity-70" />
                       )}
                       {emoji} {m.display_name}
                     </span>
@@ -250,8 +258,11 @@ export default function SettleScreen() {
                   <span className="ml-auto text-sm font-black text-orange-600">
                     ¥{r.amount.toLocaleString()}
                   </span>
-                  {ACTIVE_THEME === "guam" && (
+                  {theme === "guam" && (
                     <GuamAccent index={i} className="absolute -right-1 -bottom-1 w-7 h-7 opacity-20 pointer-events-none" />
+                  )}
+                  {theme === "korea" && (
+                    <KoreaAccent index={i} className="absolute -right-1 -bottom-1 w-7 h-7 opacity-20 pointer-events-none" />
                   )}
                 </div>
               ))}

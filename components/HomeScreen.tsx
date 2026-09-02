@@ -5,9 +5,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { useLiff } from "./LiffProvider";
 import GuamMascot from "./GuamMascot";
+import KoreaMascot from "./KoreaMascot";
 import HulaDancer from "./guam-illustrations/HulaDancer";
 import GuamAccent from "./guam-illustrations/GuamAccent";
-import { ACTIVE_THEME } from "@/lib/theme";
+import HanbokDancer from "./korea-illustrations/HanbokDancer";
+import KoreaAccent from "./korea-illustrations/KoreaAccent";
+import { useTheme } from "@/lib/theme-context";
 import type { Expense, Saving, Trip } from "@/types";
 
 interface TripData {
@@ -21,6 +24,7 @@ interface TripData {
 
 export default function HomeScreen() {
   const { activeTrip, members, currentUser, isAdmin, canApprove, group, reload, switchGroup, updateGroupApprover } = useLiff();
+  const { theme } = useTheme();
   const [data, setData] = useState<TripData | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [changingApprover, setChangingApprover] = useState(false);
@@ -201,15 +205,21 @@ export default function HomeScreen() {
           <p className="text-sm text-gray-500 mt-1">
             💳 共通カード ¥{totalCard.toLocaleString()} ／ 💴 立替 ¥{totalCash.toLocaleString()}
           </p>
-          {ACTIVE_THEME === "guam" && (
+          {theme === "guam" && (
             <GuamMascot className="absolute -bottom-1 right-2 w-12 h-12 opacity-80 pointer-events-none" />
+          )}
+          {theme === "korea" && (
+            <KoreaMascot className="absolute -bottom-1 right-2 w-12 h-12 opacity-80 pointer-events-none" />
           )}
         </div>
 
         {/* プール残高カード */}
         <div className="bg-white rounded-2xl p-4 shadow-sm relative overflow-hidden">
-          {ACTIVE_THEME === "guam" && (
+          {theme === "guam" && (
             <GuamAccent index={2} className="absolute -right-2 -bottom-2 w-10 h-10 opacity-20 pointer-events-none" />
+          )}
+          {theme === "korea" && (
+            <KoreaAccent index={2} className="absolute -right-2 -bottom-2 w-10 h-10 opacity-20 pointer-events-none" />
           )}
           <p className="text-xs text-gray-500">💰 口座プール残高</p>
           <p className={`text-2xl font-bold mt-1 ${poolBalance < 0 ? "text-red-600" : "text-blue-600"}`}>
@@ -233,8 +243,11 @@ export default function HomeScreen() {
 
         {/* メンバー積立ステータス */}
         <div className="bg-white rounded-2xl p-4 shadow-sm relative overflow-hidden">
-          {ACTIVE_THEME === "guam" && (
+          {theme === "guam" && (
             <HulaDancer className="absolute -top-2 right-3 w-10 h-14 opacity-70 pointer-events-none" />
+          )}
+          {theme === "korea" && (
+            <HanbokDancer className="absolute -top-2 right-3 w-10 h-14 opacity-70 pointer-events-none" />
           )}
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs text-gray-500">👥 メンバー積立状況</p>
@@ -378,8 +391,11 @@ export default function HomeScreen() {
                 >
                   <div className="flex items-center justify-between py-2 border-b border-gray-100">
                     <div className="flex items-center gap-2 min-w-0">
-                      {ACTIVE_THEME === "guam" && (
+                      {theme === "guam" && (
                         <GuamAccent index={i} className="w-5 h-5 shrink-0 opacity-70" />
+                      )}
+                      {theme === "korea" && (
+                        <KoreaAccent index={i} className="w-5 h-5 shrink-0 opacity-70" />
                       )}
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-gray-800 truncate">

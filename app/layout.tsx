@@ -1,7 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import LiffProvider from "@/components/LiffProvider";
-import { ACTIVE_THEME } from "@/lib/theme";
+import ThemeSwitcher from "@/components/ThemeSwitcher";
+import { getServerTheme, isFreeChoiceEnabled } from "@/lib/theme";
+import { ThemeProvider } from "@/lib/theme-context";
+
+// 日時によるテーマ自動切り替え（lib/theme.ts）を反映するため、リクエストごとに動的レンダリングする
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Tabi-Pay",
@@ -15,10 +20,16 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const serverTheme = getServerTheme();
+  const freeChoiceEnabled = isFreeChoiceEnabled();
+
   return (
-    <html lang="ja" data-theme={ACTIVE_THEME === "guam" ? "guam" : undefined}>
+    <html lang="ja" data-theme={serverTheme !== "default" ? serverTheme : undefined}>
       <body className="bg-gray-50 max-w-md mx-auto">
-        <LiffProvider>{children}</LiffProvider>
+        <ThemeProvider serverTheme={serverTheme} freeChoiceEnabled={freeChoiceEnabled}>
+          <LiffProvider>{children}</LiffProvider>
+          <ThemeSwitcher />
+        </ThemeProvider>
       </body>
     </html>
   );

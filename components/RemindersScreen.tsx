@@ -3,9 +3,11 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useLiff } from "./LiffProvider";
-import { ACTIVE_THEME } from "@/lib/theme";
+import { useTheme } from "@/lib/theme-context";
 import OceanWave from "./guam-illustrations/OceanWave";
 import GuamAccent from "./guam-illustrations/GuamAccent";
+import Lightstick from "./korea-illustrations/Lightstick";
+import KoreaAccent from "./korea-illustrations/KoreaAccent";
 import type { Reminder } from "@/types";
 
 const MAX_MESSAGE_LENGTH = 300;
@@ -13,6 +15,7 @@ const MAX_MESSAGE_LENGTH = 300;
 export default function RemindersScreen() {
   const router = useRouter();
   const { activeTrip, group, currentUser, isAdmin } = useLiff();
+  const { theme } = useTheme();
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
   const [sendDate, setSendDate] = useState("");
@@ -210,7 +213,8 @@ export default function RemindersScreen() {
           <p className="text-xs text-gray-500 mb-3">⏰ 送信予定</p>
           {pending.length === 0 && (
             <div className="text-center py-4">
-              {ACTIVE_THEME === "guam" && <OceanWave className="w-24 h-10 mx-auto mb-1 opacity-80" />}
+              {theme === "guam" && <OceanWave className="w-24 h-10 mx-auto mb-1 opacity-80" />}
+              {theme === "korea" && <Lightstick className="w-10 h-16 mx-auto mb-1 opacity-80" />}
               <p className="text-sm text-gray-400">予定中のリマインダーはありません</p>
             </div>
           )}
@@ -268,8 +272,11 @@ export default function RemindersScreen() {
               return (
                 <div key={r.reminder_id} className="flex items-start justify-between gap-2 py-2 border-b border-gray-100 last:border-0">
                   <div className="flex items-start gap-2 flex-1 min-w-0">
-                    {ACTIVE_THEME === "guam" && (
+                    {theme === "guam" && (
                       <GuamAccent index={i} className="w-6 h-6 shrink-0 opacity-70 mt-0.5" />
+                    )}
+                    {theme === "korea" && (
+                      <KoreaAccent index={i} className="w-6 h-6 shrink-0 opacity-70 mt-0.5" />
                     )}
                     <div className="min-w-0">
                       <p className="text-xs text-gray-400">{formatDateTime(r.send_at)}</p>
@@ -306,8 +313,11 @@ export default function RemindersScreen() {
             <div className="space-y-2">
               {sent.map((r, i) => (
                 <div key={r.reminder_id} className="flex items-start gap-2 py-2 border-b border-gray-100 last:border-0">
-                  {ACTIVE_THEME === "guam" && (
+                  {theme === "guam" && (
                     <GuamAccent index={i} className="w-6 h-6 shrink-0 opacity-50 mt-0.5" />
+                  )}
+                  {theme === "korea" && (
+                    <KoreaAccent index={i} className="w-6 h-6 shrink-0 opacity-50 mt-0.5" />
                   )}
                   <div className="min-w-0">
                     <p className="text-xs text-gray-400">{formatDateTime(r.send_at)}</p>

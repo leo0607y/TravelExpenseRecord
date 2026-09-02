@@ -76,3 +76,72 @@
   position: relative;
   box-shadow: 0 2px 12px rgba(0, 150, 160, 0.14);
 }
+
+/* =========================================================
+   🇰🇷 韓国テーマ
+   <html data-theme="korea"> が付いている間だけ有効になる。
+========================================================= */
+[data-theme="korea"] {
+  --brand-green: #4a6fa5;
+  --brand-green-dark: #33517d;
+}
+
+/* ページ全体の背景：韓紙（ハンジ）を思わせる淡いベージュ〜空色のグラデーション */
+[data-theme="korea"] body.bg-gray-50 {
+  background: radial-gradient(circle at 90% 4%, rgba(214, 78, 63, 0.18), transparent 24%),
+    linear-gradient(180deg, #fdf6ec 0%, #eef3fa 45%, #e7edf7 100%);
+}
+[data-theme="korea"] .bg-gray-50 {
+  background: transparent;
+}
+
+/* ブランドカラー背景全般（ボタン含む）は丹青（ダンチョン）調のグラデーションに */
+[data-theme="korea"] .bg-brand-green {
+  background: linear-gradient(120deg, #4a6fa5 0%, #2f4d78 100%);
+}
+
+/* 画面ヘッダーに太極文様風の装飾を追加。小さなボタンには乗らないよう限定する */
+[data-theme="korea"] .bg-brand-green.text-white.px-4.py-4 {
+  background: linear-gradient(120deg, #4a6fa5 0%, #33517d 65%, #33517d 100%);
+  position: relative;
+  overflow: hidden;
+}
+[data-theme="korea"] .bg-brand-green.text-white.px-4.py-4::before {
+  content: "";
+  position: absolute;
+  top: -22px;
+  right: -14px;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: conic-gradient(#d64e3f 0deg 90deg, #4a6fa5 90deg 180deg, #d64e3f 180deg 270deg, #4a6fa5 270deg 360deg);
+  opacity: 0.5;
+  pointer-events: none;
+}
+[data-theme="korea"] .bg-brand-green.text-white.px-4.py-4::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 12px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.35) 0px,
+    rgba(255, 255, 255, 0.35) 10px,
+    transparent 10px,
+    transparent 20px
+  );
+  pointer-events: none;
+}
+
+/* 固定フッターに韓国らしい丹青カラーのライン */
+[data-theme="korea"] .fixed.bottom-0.bg-white {
+  border-top: 2px solid #d64e3f;
+}
+
+/* 白カードに柔らかい影。手描きイラストは各コンポーネント内でSVGとして配置する（components/korea-illustrations/）。 */
+[data-theme="korea"] div.bg-white.rounded-2xl {
+  position: relative;
+  box-shadow: 0 2px 12px rgba(74, 111, 165, 0.16);
+}

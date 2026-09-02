@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { LiffProfile, Group, User, Trip } from "@/types";
-import { ACTIVE_THEME } from "@/lib/theme";
+import { useTheme } from "@/lib/theme-context";
 import HulaDancer from "./guam-illustrations/HulaDancer";
 import HibiscusFlower from "./guam-illustrations/HibiscusFlower";
 import PalmSunset from "./guam-illustrations/PalmSunset";
@@ -10,6 +10,13 @@ import LatteStone from "./guam-illustrations/LatteStone";
 import Seashell from "./guam-illustrations/Seashell";
 import Airplane from "./guam-illustrations/Airplane";
 import GuamAccent from "./guam-illustrations/GuamAccent";
+import HanbokDancer from "./korea-illustrations/HanbokDancer";
+import MapleLeaf from "./korea-illustrations/MapleLeaf";
+import Gyeongbokgung from "./korea-illustrations/Gyeongbokgung";
+import Hanok from "./korea-illustrations/Hanok";
+import Taegeuk from "./korea-illustrations/Taegeuk";
+import KoreaAirplane from "./korea-illustrations/KoreaAirplane";
+import KoreaAccent from "./korea-illustrations/KoreaAccent";
 
 interface GroupEntry {
   user: User;
@@ -27,6 +34,7 @@ interface Props {
 type Mode = "list" | "create" | "join";
 
 export default function GroupSelectScreen({ profile, existingGroups, onSelected }: Props) {
+  const { theme } = useTheme();
   const [mode, setMode] = useState<Mode>("list");
   const [inviteCode, setInviteCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -101,8 +109,11 @@ export default function GroupSelectScreen({ profile, existingGroups, onSelected 
   if (createdCode && pendingEntry) {
     return (
       <div className="w-full max-w-sm space-y-5 text-center">
-        {ACTIVE_THEME === "guam" && (
+        {theme === "guam" && (
           <PalmSunset className="w-24 h-28 mx-auto" />
+        )}
+        {theme === "korea" && (
+          <Gyeongbokgung className="w-28 h-20 mx-auto" />
         )}
         <p className="text-lg font-bold text-gray-800">グループを作成しました！</p>
         <p className="text-sm text-gray-500">このコードをメンバーに共有してください</p>
@@ -126,7 +137,8 @@ export default function GroupSelectScreen({ profile, existingGroups, onSelected 
   if (mode === "join") {
     return (
       <div className="w-full max-w-sm space-y-4">
-        {ACTIVE_THEME === "guam" && <Seashell className="w-14 h-12 mx-auto" />}
+        {theme === "guam" && <Seashell className="w-14 h-12 mx-auto" />}
+        {theme === "korea" && <Taegeuk className="w-12 h-12 mx-auto" />}
         <p className="text-center font-bold text-gray-800">招待コードで参加する</p>
         {error && <p className="text-red-500 text-sm text-center">{error}</p>}
         <input
@@ -155,7 +167,8 @@ export default function GroupSelectScreen({ profile, existingGroups, onSelected 
   if (mode === "create") {
     return (
       <div className="w-full max-w-sm space-y-4">
-        {ACTIVE_THEME === "guam" && <LatteStone className="w-10 h-14 mx-auto" />}
+        {theme === "guam" && <LatteStone className="w-10 h-14 mx-auto" />}
+        {theme === "korea" && <Hanok className="w-16 h-12 mx-auto" />}
         <p className="text-center font-bold text-gray-800">新しいグループを作る</p>
         <p className="text-sm text-gray-500 text-center">あなたが管理者になります。作成後、招待コードをメンバーに共有してください。</p>
         {error && <p className="text-red-500 text-sm text-center">{error}</p>}
@@ -177,11 +190,18 @@ export default function GroupSelectScreen({ profile, existingGroups, onSelected 
   return (
     <div className="w-full max-w-sm space-y-4">
       <div className="text-center relative">
-        {ACTIVE_THEME === "guam" && (
+        {theme === "guam" && (
           <>
             <Airplane className="w-20 h-14 absolute -top-4 -left-2 opacity-90" />
             <HulaDancer className="w-14 h-16 mx-auto" />
             <HibiscusFlower className="w-8 h-8 absolute top-0 right-4 opacity-80" />
+          </>
+        )}
+        {theme === "korea" && (
+          <>
+            <KoreaAirplane className="w-20 h-14 absolute -top-4 -left-2 opacity-90" />
+            <HanbokDancer className="w-14 h-16 mx-auto" />
+            <MapleLeaf className="w-8 h-8 absolute top-0 right-4 opacity-80" />
           </>
         )}
         <p className="text-2xl font-bold text-gray-800">Tabi-Pay</p>
@@ -200,8 +220,11 @@ export default function GroupSelectScreen({ profile, existingGroups, onSelected 
               className="w-full text-left bg-white border-2 border-gray-100 rounded-2xl p-4 flex items-center justify-between active:border-brand-green transition-colors"
             >
               <div className="flex items-center gap-2 flex-1 min-w-0">
-                {ACTIVE_THEME === "guam" && (
+                {theme === "guam" && (
                   <GuamAccent index={i} className="w-7 h-7 shrink-0 opacity-70" />
+                )}
+                {theme === "korea" && (
+                  <KoreaAccent index={i} className="w-7 h-7 shrink-0 opacity-70" />
                 )}
                 <div className="flex-1 min-w-0">
                 <p className="font-bold text-gray-800 truncate">

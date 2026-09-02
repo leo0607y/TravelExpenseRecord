@@ -4,9 +4,11 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useLiff } from "@/components/LiffProvider";
-import { ACTIVE_THEME } from "@/lib/theme";
+import { useTheme } from "@/lib/theme-context";
 import GuamAccent from "@/components/guam-illustrations/GuamAccent";
 import Seashell from "@/components/guam-illustrations/Seashell";
+import KoreaAccent from "@/components/korea-illustrations/KoreaAccent";
+import Taegeuk from "@/components/korea-illustrations/Taegeuk";
 import type { Saving, Trip } from "@/types";
 
 type SavingWithUser = Saving & { user: { display_name: string; picture_url: string | null } };
@@ -14,6 +16,7 @@ type TripWithSavings = { trip: Pick<Trip, "trip_id" | "title" | "status" | "crea
 
 export default function SavingsPage() {
   const { activeTrip, group, currentUser, canApprove } = useLiff();
+  const { theme } = useTheme();
   const [tripGroups, setTripGroups] = useState<TripWithSavings[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingSavingId, setEditingSavingId] = useState<string | null>(null);
@@ -91,7 +94,8 @@ export default function SavingsPage() {
 
         {tripGroups.length === 0 && (
           <div className="text-center py-12">
-            {ACTIVE_THEME === "guam" && <Seashell className="w-14 h-12 mx-auto mb-2 opacity-80" />}
+            {theme === "guam" && <Seashell className="w-14 h-12 mx-auto mb-2 opacity-80" />}
+            {theme === "korea" && <Taegeuk className="w-12 h-12 mx-auto mb-2 opacity-80" />}
             <p className="text-gray-400 text-sm">積立はまだありません</p>
           </div>
         )}
@@ -104,8 +108,11 @@ export default function SavingsPage() {
 
           return (
             <div key={trip.trip_id} className="relative bg-white rounded-2xl shadow-sm overflow-hidden">
-              {ACTIVE_THEME === "guam" && (
+              {theme === "guam" && (
                 <GuamAccent index={tripIndex} className="absolute -right-2 -top-2 w-10 h-10 opacity-20 pointer-events-none" />
+              )}
+              {theme === "korea" && (
+                <KoreaAccent index={tripIndex} className="absolute -right-2 -top-2 w-10 h-10 opacity-20 pointer-events-none" />
               )}
               {/* 旅行ヘッダー */}
               <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
@@ -198,10 +205,14 @@ function SavingRow({
   onApprove: () => void;
   onReject: () => void;
 }) {
+  const { theme } = useTheme();
   return (
     <div className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0">
-      {ACTIVE_THEME === "guam" && (
+      {theme === "guam" && (
         <GuamAccent index={accentIndex} className="w-6 h-6 shrink-0 opacity-70" />
+      )}
+      {theme === "korea" && (
+        <KoreaAccent index={accentIndex} className="w-6 h-6 shrink-0 opacity-70" />
       )}
       {s.user?.picture_url ? (
         <Image src={s.user.picture_url} alt={s.user.display_name} width={36} height={36} className="rounded-full shrink-0" />

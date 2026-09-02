@@ -2,12 +2,17 @@
 
 import { useState } from "react";
 import type { LiffProfile, Group, User, Trip } from "@/types";
-import { ACTIVE_THEME } from "@/lib/theme";
+import { useTheme } from "@/lib/theme-context";
 import HulaDancer from "./guam-illustrations/HulaDancer";
 import PalmSunset from "./guam-illustrations/PalmSunset";
 import LatteStone from "./guam-illustrations/LatteStone";
 import Seashell from "./guam-illustrations/Seashell";
 import Airplane from "./guam-illustrations/Airplane";
+import HanbokDancer from "./korea-illustrations/HanbokDancer";
+import Gyeongbokgung from "./korea-illustrations/Gyeongbokgung";
+import Hanok from "./korea-illustrations/Hanok";
+import Taegeuk from "./korea-illustrations/Taegeuk";
+import KoreaAirplane from "./korea-illustrations/KoreaAirplane";
 
 interface Props {
   profile: LiffProfile;
@@ -17,6 +22,7 @@ interface Props {
 type Mode = "select" | "create" | "join";
 
 export default function JoinScreen({ profile, onJoined }: Props) {
+  const { theme } = useTheme();
   const [mode, setMode] = useState<Mode>("select");
   const [inviteCode, setInviteCode] = useState("");
   const [createdCode, setCreatedCode] = useState<string | null>(null);
@@ -76,8 +82,11 @@ export default function JoinScreen({ profile, onJoined }: Props) {
   if (createdCode && pendingJoin) {
     return (
       <div className="w-full max-w-sm space-y-5 text-center">
-        {ACTIVE_THEME === "guam" && (
+        {theme === "guam" && (
           <PalmSunset className="w-24 h-28 mx-auto" />
+        )}
+        {theme === "korea" && (
+          <Gyeongbokgung className="w-28 h-20 mx-auto" />
         )}
         <div>
           <p className="text-lg font-bold text-gray-800">グループを作成しました！</p>
@@ -103,10 +112,16 @@ export default function JoinScreen({ profile, onJoined }: Props) {
     return (
       <div className="w-full max-w-sm space-y-5">
         <div className="text-center">
-          {ACTIVE_THEME === "guam" && (
+          {theme === "guam" && (
             <>
               <Airplane className="w-20 h-14 mx-auto" />
               <HulaDancer className="w-14 h-16 mx-auto" />
+            </>
+          )}
+          {theme === "korea" && (
+            <>
+              <KoreaAirplane className="w-20 h-14 mx-auto" />
+              <HanbokDancer className="w-14 h-16 mx-auto" />
             </>
           )}
           <p className="text-2xl font-bold text-gray-800">Tabi-Pay</p>
@@ -131,7 +146,8 @@ export default function JoinScreen({ profile, onJoined }: Props) {
   if (mode === "create") {
     return (
       <div className="w-full max-w-sm space-y-4">
-        {ACTIVE_THEME === "guam" && <LatteStone className="w-10 h-14 mx-auto" />}
+        {theme === "guam" && <LatteStone className="w-10 h-14 mx-auto" />}
+        {theme === "korea" && <Hanok className="w-16 h-12 mx-auto" />}
         <p className="text-center font-bold text-gray-800">グループを作成する</p>
         <p className="text-sm text-gray-500 text-center">あなたが管理者になります。招待コードをメンバーに共有してください。</p>
         {error && <p className="text-red-500 text-sm text-center">{error}</p>}
@@ -151,7 +167,8 @@ export default function JoinScreen({ profile, onJoined }: Props) {
 
   return (
     <div className="w-full max-w-sm space-y-4">
-      {ACTIVE_THEME === "guam" && <Seashell className="w-14 h-12 mx-auto" />}
+      {theme === "guam" && <Seashell className="w-14 h-12 mx-auto" />}
+      {theme === "korea" && <Taegeuk className="w-12 h-12 mx-auto" />}
       <p className="text-center font-bold text-gray-800">招待コードで参加する</p>
       {error && <p className="text-red-500 text-sm text-center">{error}</p>}
       <input
