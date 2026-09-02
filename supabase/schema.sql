@@ -75,11 +75,15 @@ CREATE TABLE IF NOT EXISTS expense_beneficiaries (
 );
 
 -- Reminders（アプリ内から予約するリマインダー。指定日時にLINEへ送信される）
+-- ※ created_by は users(user_id) への外部キーを付けていない。
+--   本番DBのusersテーブルに一意制約が想定通り付いておらず
+--   REFERENCES users(user_id) がエラーになったため（42830）。
+--   ユーザーの正当性チェックはアプリ側（APIルート）で行っている。
 CREATE TABLE IF NOT EXISTS reminders (
   reminder_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   trip_id     UUID NOT NULL REFERENCES trips(trip_id) ON DELETE CASCADE,
   group_id    TEXT NOT NULL REFERENCES groups(group_id),
-  created_by  TEXT NOT NULL REFERENCES users(user_id),
+  created_by  TEXT NOT NULL,
   message     TEXT NOT NULL,
   send_at     TIMESTAMPTZ NOT NULL,
   sent_at     TIMESTAMPTZ,
