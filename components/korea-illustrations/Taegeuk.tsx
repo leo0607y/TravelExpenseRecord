@@ -7,7 +7,7 @@ export default function Taegeuk({ className }: { className?: string }) {
         fill="#d64e3f"
       />
       <path
-        d="M0 -18 A18 18 0 0 0 0 18 A9 9 0 0 1 0 0 A9 9 0 0 0 0 -18 Z"
+        d="M0 18 A9 9 0 0 1 0 0 A9 9 0 0 0 0 -18 A18 18 0 0 1 0 18 Z"
         fill="#4a6fa5"
       />
       <circle cy="-9" r="3.2" fill="#4a6fa5" />

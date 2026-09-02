@@ -21,6 +21,12 @@ import Sunglasses from "./Sunglasses";
 import Pineapple from "./Pineapple";
 import Dolphin from "./Dolphin";
 import Rainbow from "./Rainbow";
+import Watermelon from "./Watermelon";
+import Ukulele from "./Ukulele";
+import BeachUmbrella from "./BeachUmbrella";
+import Flamingo from "./Flamingo";
+import Popsicle from "./Popsicle";
+import StrawHat from "./StrawHat";
 
 export {
   HulaDancer,
@@ -46,6 +52,12 @@ export {
   Pineapple,
   Dolphin,
   Rainbow,
+  Watermelon,
+  Ukulele,
+  BeachUmbrella,
+  Flamingo,
+  Popsicle,
+  StrawHat,
 };
 
 export const GUAM_ICONS = [
@@ -72,4 +84,10 @@ export const GUAM_ICONS = [
   Pineapple,
   Dolphin,
   Rainbow,
+  Watermelon,
+  Ukulele,
+  BeachUmbrella,
+  Flamingo,
+  Popsicle,
+  StrawHat,
 ] as const;

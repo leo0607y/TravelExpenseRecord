@@ -5,17 +5,21 @@ export type ThemeName = "default" | "guam" | "korea";
 const MANUAL_OVERRIDE: ThemeName | null = null;
 
 // 自動切り替えスケジュール（日本時間基準、比較はUTCで行う）
-// 　〜9/8 06:00 JST      : グアムテーマ
-// 　9/8 06:00〜9/9 12:00 : 韓国テーマ（強制、ユーザーは選べない）
-// 　9/9 12:00 JST〜      : 韓国テーマを初期値に、ユーザーがグアム/韓国を自由に選択可能
+// 　〜9/3 23:00 JST        : 韓国テーマ（強制）
+// 　9/3 23:00〜9/8 06:00   : グアムテーマ（強制）
+// 　9/8 06:00〜9/9 10:00   : 韓国テーマ（強制）
+// 　9/9 10:00 JST〜        : 標準/グアム/韓国をユーザーが自由に選択可能（初期値は韓国）
 //     （選択の切り替えは lib/theme-context.tsx が担当）
+const GUAM_SWITCH_AT = new Date("2026-09-03T14:00:00.000Z"); // 2026-09-03 23:00 JST
 const KOREA_SWITCH_AT = new Date("2026-09-07T21:00:00.000Z"); // 2026-09-08 06:00 JST
-export const FREE_CHOICE_AT = new Date("2026-09-09T03:00:00.000Z"); // 2026-09-09 12:00 JST
+export const FREE_CHOICE_AT = new Date("2026-09-09T01:00:00.000Z"); // 2026-09-09 10:00 JST
 
 /** 現在時刻において自動スケジュール上あるべきテーマ（手動固定があればそれを優先） */
 export function getScheduledTheme(now: Date = new Date()): "guam" | "korea" {
   if (MANUAL_OVERRIDE === "guam" || MANUAL_OVERRIDE === "korea") return MANUAL_OVERRIDE;
-  return now < KOREA_SWITCH_AT ? "guam" : "korea";
+  if (now < GUAM_SWITCH_AT) return "korea";
+  if (now < KOREA_SWITCH_AT) return "guam";
+  return "korea";
 }
 
 /** この時刻以降、ユーザーがUIテーマを自由に選択できるようになる */

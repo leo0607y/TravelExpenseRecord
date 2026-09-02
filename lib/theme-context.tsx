@@ -8,7 +8,7 @@ const STORAGE_KEY = "tabipay-theme-pref";
 interface ThemeContextValue {
   theme: ThemeName;
   freeChoiceEnabled: boolean;
-  setTheme: (theme: "guam" | "korea") => void;
+  setTheme: (theme: ThemeName) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -30,18 +30,20 @@ export function ThemeProvider({
     if (!freeChoiceEnabled) return;
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved === "guam" || saved === "korea") {
+      if (saved === "guam" || saved === "korea" || saved === "default") {
         setThemeState(saved);
-        document.documentElement.dataset.theme = saved;
+        if (saved === "default") delete document.documentElement.dataset.theme;
+        else document.documentElement.dataset.theme = saved;
       }
     } catch {
       // localStorageが使えない環境ではサーバーテーマのまま
     }
   }, [freeChoiceEnabled]);
 
-  const setTheme = (next: "guam" | "korea") => {
+  const setTheme = (next: ThemeName) => {
     setThemeState(next);
-    document.documentElement.dataset.theme = next;
+    if (next === "default") delete document.documentElement.dataset.theme;
+    else document.documentElement.dataset.theme = next;
     try {
       localStorage.setItem(STORAGE_KEY, next);
     } catch {

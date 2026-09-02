@@ -12,6 +12,9 @@ import Lightstick from "./Lightstick";
 import DolHareubang from "./DolHareubang";
 import Fan from "./Fan";
 import KoreaAirplane from "./KoreaAirplane";
+import Bibimbap from "./Bibimbap";
+import Banchan from "./Banchan";
+import HanbokCouple from "./HanbokCouple";
 
 export {
   HanbokDancer,
@@ -28,6 +31,9 @@ export {
   DolHareubang,
   Fan,
   KoreaAirplane,
+  Bibimbap,
+  Banchan,
+  HanbokCouple,
 };
 
 export const KOREA_ICONS = [
@@ -45,4 +51,7 @@ export const KOREA_ICONS = [
   NamsanTower,
   DolHareubang,
   KoreaAirplane,
+  Bibimbap,
+  Banchan,
+  HanbokCouple,
 ] as const;

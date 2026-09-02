@@ -12,6 +12,15 @@ export default function ThemeSwitcher() {
     <div className="fixed bottom-20 right-3 z-40 flex bg-white rounded-full shadow-lg border border-gray-200 overflow-hidden text-sm">
       <button
         type="button"
+        onClick={() => setTheme("default")}
+        className={`px-3 py-2 font-bold transition-colors ${
+          theme === "default" ? "bg-brand-green text-white" : "text-gray-500"
+        }`}
+      >
+        ✨ 標準
+      </button>
+      <button
+        type="button"
         onClick={() => setTheme("guam")}
         className={`px-3 py-2 font-bold transition-colors ${
           theme === "guam" ? "bg-brand-green text-white" : "text-gray-500"
