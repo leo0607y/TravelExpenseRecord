@@ -1,0 +1,17 @@
+name: Daily Summary Cron
+
+# Vercel Hobbyプランのcronは信頼性が低く実際には発火しないことが確認できたため、
+# GitHub Actionsから毎日22:00 JST（13:00 UTC）に /api/cron/daily-summary を呼び出す。
+on:
+  schedule:
+    - cron: "0 13 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call daily-summary endpoint
+        run: |
+          curl -fsS -X GET "https://travel-expense-record.vercel.app/api/cron/daily-summary" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
