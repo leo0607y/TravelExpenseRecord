@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useLiff } from "./LiffProvider";
 import { useTheme } from "@/lib/theme-context";
+import { useTripRealtime } from "@/lib/useTripRealtime";
 import GuamAccent from "./guam-illustrations/GuamAccent";
 import ThemeAccent from "./ThemeAccent";
 import ThemeAccentStrip from "./ThemeAccentStrip";
@@ -23,6 +24,7 @@ export default function SettleScreen() {
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState("");
   const [savingAmount, setSavingAmount] = useState(false);
+  const [amountError, setAmountError] = useState<string | null>(null);
 
   const fetchSummary = useCallback(async () => {
     if (!activeTrip) return;
@@ -44,18 +46,35 @@ export default function SettleScreen() {
     fetchExpenses();
   }, [fetchSummary, fetchExpenses]);
 
+  // 他のメンバーが支出・積立を変更した瞬間にも精算状況を自動更新する
+  useTripRealtime(activeTrip?.trip_id, useCallback(() => {
+    fetchSummary();
+    fetchExpenses();
+  }, [fetchSummary, fetchExpenses]));
+
   const updateExpenseAmount = async (expenseId: string) => {
     const newAmount = Number(editAmount);
     if (!newAmount || newAmount <= 0) return;
     setSavingAmount(true);
-    await fetch(`/api/expenses/${expenseId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount: newAmount }),
-    });
-    setEditingExpenseId(null);
-    setSavingAmount(false);
-    await Promise.all([fetchSummary(), fetchExpenses()]);
+    setAmountError(null);
+    try {
+      const res = await fetch(`/api/expenses/${expenseId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: newAmount }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setAmountError(body.error ?? "修正に失敗しました。もう一度お試しください");
+        return;
+      }
+      setEditingExpenseId(null);
+      await Promise.all([fetchSummary(), fetchExpenses()]);
+    } catch {
+      setAmountError("通信エラーが発生しました。もう一度お試しください");
+    } finally {
+      setSavingAmount(false);
+    }
   };
 
   const settle = async () => {
@@ -148,6 +167,9 @@ export default function SettleScreen() {
         {isAdmin && expenses.length > 0 && (
           <div className="bg-white rounded-2xl p-4 shadow-sm">
             <p className="text-xs text-gray-500 mb-3">📋 支出一覧（金額を修正できます）</p>
+            {amountError && (
+              <p className="text-xs text-red-500 mb-2">⚠️ {amountError}</p>
+            )}
             <div className="space-y-2">
               {expenses.map((e, i) => (
                 <div key={e.expense_id} className="border-b border-gray-100 pb-2 last:border-0 last:pb-0">

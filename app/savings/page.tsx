@@ -22,6 +22,35 @@ export default function SavingsPage() {
   const [loading, setLoading] = useState(true);
   const [editingSavingId, setEditingSavingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
+
+  const setBusy = (id: string, busy: boolean) => {
+    setBusyIds((prev) => {
+      const next = new Set(prev);
+      if (busy) next.add(id); else next.delete(id);
+      return next;
+    });
+  };
+
+  // ボタン操作の共通処理：多重タップ防止・失敗時はエラーを画面に表示する
+  const runAction = async (id: string, fn: () => Promise<Response>) => {
+    setBusy(id, true);
+    setActionError(null);
+    try {
+      const res = await fn();
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setActionError(body.error ?? "操作に失敗しました。もう一度お試しください");
+        return;
+      }
+      await fetchSavings();
+    } catch {
+      setActionError("通信エラーが発生しました。もう一度お試しください");
+    } finally {
+      setBusy(id, false);
+    }
+  };
 
   const fetchSavings = useCallback(async () => {
     if (!group) return;
@@ -32,33 +61,31 @@ export default function SavingsPage() {
 
   useEffect(() => { fetchSavings(); }, [fetchSavings]);
 
-  const approveSaving = async (savingId: string) => {
-    await fetch(`/api/savings/${savingId}/approve`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requesterId: currentUser?.user_id }),
-    });
-    fetchSavings();
-  };
+  const approveSaving = (savingId: string) =>
+    runAction(`approve-${savingId}`, () =>
+      fetch(`/api/savings/${savingId}/approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requesterId: currentUser?.user_id }),
+      }));
 
-  const rejectSaving = async (savingId: string) => {
-    await fetch(`/api/savings/${savingId}`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requesterId: currentUser?.user_id }),
-    });
-    fetchSavings();
-  };
+  const rejectSaving = (savingId: string) =>
+    runAction(`reject-${savingId}`, () =>
+      fetch(`/api/savings/${savingId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requesterId: currentUser?.user_id }),
+      }));
 
   const saveTitle = async (savingId: string) => {
     if (!currentUser) return;
-    await fetch(`/api/savings/${savingId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: editingTitle, requesterId: currentUser.user_id }),
-    });
+    await runAction(`title-${savingId}`, () =>
+      fetch(`/api/savings/${savingId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: editingTitle, requesterId: currentUser.user_id }),
+      }));
     setEditingSavingId(null);
-    fetchSavings();
   };
 
   if (loading) {
@@ -82,6 +109,14 @@ export default function SavingsPage() {
       </div>
 
       <div className="p-4 space-y-4">
+        {/* 操作エラー通知 */}
+        {actionError && (
+          <div className="bg-red-50 text-red-600 rounded-xl p-3 text-sm flex items-center justify-between gap-2">
+            <span>⚠️ {actionError}</span>
+            <button onClick={() => setActionError(null)} className="text-red-400 shrink-0">×</button>
+          </div>
+        )}
+
         {/* 全体サマリー */}
         <div className="bg-white rounded-2xl p-4 shadow-sm flex gap-4">
           <div className="flex-1 text-center border-r border-gray-100">
@@ -143,6 +178,7 @@ export default function SavingsPage() {
                           editingTitle={editingTitle}
                           currentUserId={currentUser?.user_id}
                           canApprove={isActive && canApprove}
+                          busy={busyIds.has(`approve-${s.saving_id}`) || busyIds.has(`reject-${s.saving_id}`)}
                           onStartEdit={() => { setEditingSavingId(s.saving_id); setEditingTitle(s.title ?? ""); }}
                           onSaveTitle={() => saveTitle(s.saving_id)}
                           onCancelEdit={() => setEditingSavingId(null)}
@@ -190,7 +226,7 @@ export default function SavingsPage() {
 }
 
 function SavingRow({
-  s, accentIndex, isEditing, editingTitle, currentUserId, canApprove,
+  s, accentIndex, isEditing, editingTitle, currentUserId, canApprove, busy = false,
   onStartEdit, onSaveTitle, onCancelEdit, onEditingTitleChange,
   onApprove, onReject,
 }: {
@@ -200,6 +236,7 @@ function SavingRow({
   editingTitle: string;
   currentUserId?: string;
   canApprove: boolean;
+  busy?: boolean;
   onStartEdit: () => void;
   onSaveTitle: () => void;
   onCancelEdit: () => void;
@@ -260,8 +297,8 @@ function SavingRow({
         <div className="flex flex-col gap-1 shrink-0">
           {canApprove && (
             <>
-              <button onClick={onReject} className="text-xs bg-red-400 text-white rounded-full px-3 py-1">棄却</button>
-              <button onClick={onApprove} className="text-xs bg-brand-green text-white rounded-full px-3 py-1">承認</button>
+              <button onClick={onReject} disabled={busy} className="text-xs bg-red-400 text-white rounded-full px-3 py-1 disabled:opacity-50">棄却</button>
+              <button onClick={onApprove} disabled={busy} className="text-xs bg-brand-green text-white rounded-full px-3 py-1 disabled:opacity-50">{busy ? "処理中" : "承認"}</button>
             </>
           )}
           {!canApprove && <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">確認待ち</span>}

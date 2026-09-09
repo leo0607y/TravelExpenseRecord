@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useLiff } from "./LiffProvider";
+import { useTripRealtime } from "@/lib/useTripRealtime";
 import GuamMascot from "./GuamMascot";
 import KoreaMascot from "./KoreaMascot";
 import HulaDancer from "./guam-illustrations/HulaDancer";
@@ -33,6 +34,35 @@ export default function HomeScreen() {
   const [titleInput, setTitleInput] = useState("");
   const [codeCopied, setCodeCopied] = useState(false);
   const [deletingGroup, setDeletingGroup] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
+
+  const setBusy = (id: string, busy: boolean) => {
+    setBusyIds((prev) => {
+      const next = new Set(prev);
+      if (busy) next.add(id); else next.delete(id);
+      return next;
+    });
+  };
+
+  // ボタン操作の共通処理：多重タップ防止・失敗時はエラーを画面に表示する
+  const runAction = async (id: string, fn: () => Promise<Response>, onSuccess?: () => Promise<void> | void) => {
+    setBusy(id, true);
+    setActionError(null);
+    try {
+      const res = await fn();
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setActionError(body.error ?? "操作に失敗しました。もう一度お試しください");
+        return;
+      }
+      await onSuccess?.();
+    } catch {
+      setActionError("通信エラーが発生しました。もう一度お試しください");
+    } finally {
+      setBusy(id, false);
+    }
+  };
 
   const fetchData = useCallback(async () => {
     if (!activeTrip) return;
@@ -41,6 +71,9 @@ export default function HomeScreen() {
   }, [activeTrip]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // 他のメンバーが支出・積立を変更した瞬間にも自分の画面を自動更新する
+  useTripRealtime(activeTrip?.trip_id, fetchData);
 
   if (!activeTrip || !data) {
     return <div className="flex items-center justify-center h-screen text-gray-400">読み込み中...</div>;
@@ -61,64 +94,71 @@ export default function HomeScreen() {
     return { label: "積立済", color: "bg-green-100 text-green-700" };
   };
 
-  const approveSaving = async (savingId: string) => {
-    await fetch(`/api/savings/${savingId}/approve`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requesterId: currentUser?.user_id }),
-    });
-    fetchData();
-  };
+  const approveSaving = (savingId: string) =>
+    runAction(`approve-${savingId}`, () =>
+      fetch(`/api/savings/${savingId}/approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requesterId: currentUser?.user_id }),
+      }), fetchData);
 
-  const remindSaving = async (savingId: string) => {
-    await fetch(`/api/savings/${savingId}/remind`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requesterId: currentUser?.user_id }),
-    });
-  };
+  const remindSaving = (savingId: string) =>
+    runAction(`remind-${savingId}`, () =>
+      fetch(`/api/savings/${savingId}/remind`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requesterId: currentUser?.user_id }),
+      }));
 
-  const rejectSaving = async (savingId: string) => {
-    await fetch(`/api/savings/${savingId}`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requesterId: currentUser?.user_id }),
-    });
-    fetchData();
-  };
+  const rejectSaving = (savingId: string) =>
+    runAction(`reject-${savingId}`, () =>
+      fetch(`/api/savings/${savingId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requesterId: currentUser?.user_id }),
+      }), fetchData);
 
-  const remindUser = async (userId: string) => {
+  const remindUser = (userId: string) => {
     if (!currentUser) return;
-    await fetch(`/api/trips/${trip.trip_id}/savings/remind-user`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requesterId: currentUser.user_id, userId }),
-    });
+    return runAction(`remind-user-${userId}`, () =>
+      fetch(`/api/trips/${trip.trip_id}/savings/remind-user`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requesterId: currentUser.user_id, userId }),
+      }));
   };
 
   const setApprover = async () => {
     if (!group || !currentUser || !newApproverId) return;
-    const res = await fetch(`/api/groups/${group.group_id}/approver`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requesterId: currentUser.user_id, approverId: newApproverId }),
-    });
-    if (res.ok) {
-      updateGroupApprover(newApproverId);
-    }
-    setChangingApprover(false);
+    await runAction("set-approver", () =>
+      fetch(`/api/groups/${group.group_id}/approver`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requesterId: currentUser.user_id, approverId: newApproverId }),
+      }), () => { updateGroupApprover(newApproverId); setChangingApprover(false); });
   };
 
   const deleteGroup = async () => {
     if (!group || !currentUser) return;
     setDeletingGroup(true);
-    await fetch(`/api/groups/${group.group_id}`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requesterId: currentUser.user_id }),
-    });
-    setDeletingGroup(false);
-    reload();
+    setActionError(null);
+    try {
+      const res = await fetch(`/api/groups/${group.group_id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requesterId: currentUser.user_id }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setActionError(body.error ?? "削除に失敗しました");
+        return;
+      }
+      reload();
+    } catch {
+      setActionError("通信エラーが発生しました。もう一度お試しください");
+    } finally {
+      setDeletingGroup(false);
+    }
   };
 
   const copyInviteCode = async () => {
@@ -191,6 +231,14 @@ export default function HomeScreen() {
       </div>
 
       <div className="p-4 space-y-4">
+        {/* 操作エラー通知 */}
+        {actionError && (
+          <div className="bg-red-50 text-red-600 rounded-xl p-3 text-sm flex items-center justify-between gap-2">
+            <span>⚠️ {actionError}</span>
+            <button onClick={() => setActionError(null)} className="text-red-400 shrink-0">×</button>
+          </div>
+        )}
+
         {/* リマインダー */}
         <Link
           href="/reminders"
@@ -273,9 +321,10 @@ export default function HomeScreen() {
                   <span className={`text-xs px-2 py-0.5 rounded-full ${st.color}`}>{st.label}</span>
                   <button
                     onClick={() => remindUser(m.user_id)}
-                    className="mt-1 text-xs bg-orange-400 text-white rounded-full px-2 py-0.5"
+                    disabled={busyIds.has(`remind-user-${m.user_id}`)}
+                    className="mt-1 text-xs bg-orange-400 text-white rounded-full px-2 py-0.5 disabled:opacity-50"
                   >
-                    催促
+                    {busyIds.has(`remind-user-${m.user_id}`) ? "送信中" : "催促"}
                   </button>
                 </div>
               );
@@ -296,21 +345,24 @@ export default function HomeScreen() {
                     <div className="flex gap-1 shrink-0">
                       <button
                         onClick={() => remindSaving(s.saving_id)}
-                        className="text-xs bg-orange-400 text-white rounded-full px-2 py-1"
+                        disabled={busyIds.has(`remind-${s.saving_id}`)}
+                        className="text-xs bg-orange-400 text-white rounded-full px-2 py-1 disabled:opacity-50"
                       >
                         催促
                       </button>
                       <button
                         onClick={() => rejectSaving(s.saving_id)}
-                        className="text-xs bg-red-400 text-white rounded-full px-2 py-1"
+                        disabled={busyIds.has(`reject-${s.saving_id}`) || busyIds.has(`approve-${s.saving_id}`)}
+                        className="text-xs bg-red-400 text-white rounded-full px-2 py-1 disabled:opacity-50"
                       >
                         棄却
                       </button>
                       <button
                         onClick={() => approveSaving(s.saving_id)}
-                        className="text-xs bg-brand-green text-white rounded-full px-2 py-1"
+                        disabled={busyIds.has(`approve-${s.saving_id}`) || busyIds.has(`reject-${s.saving_id}`)}
+                        className="text-xs bg-brand-green text-white rounded-full px-2 py-1 disabled:opacity-50"
                       >
-                        承認
+                        {busyIds.has(`approve-${s.saving_id}`) ? "処理中" : "承認"}
                       </button>
                     </div>
                   </div>
@@ -346,7 +398,11 @@ export default function HomeScreen() {
                     <option key={m.user_id} value={m.user_id}>{m.display_name}</option>
                   ))}
                 </select>
-                <button onClick={setApprover} className="bg-brand-green text-white rounded-xl px-3 text-sm font-bold">
+                <button
+                  onClick={setApprover}
+                  disabled={busyIds.has("set-approver")}
+                  className="bg-brand-green text-white rounded-xl px-3 text-sm font-bold disabled:opacity-50"
+                >
                   確定
                 </button>
                 <button onClick={() => setChangingApprover(false)} className="text-gray-400 text-sm">
@@ -504,24 +560,42 @@ function SavingForm({ tripId, userId, onDone }: { tripId: string; userId: string
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const submit = async () => {
     if (!title.trim() || !amount || Number(amount) <= 0) return;
     setLoading(true);
-    await fetch("/api/savings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ trip_id: tripId, user_id: userId, amount: Number(amount), title: title.trim() || null }),
-    });
-    setLoading(false);
-    setTitle("");
-    setAmount("");
-    onDone();
+    setError(null);
+    try {
+      const res = await fetch("/api/savings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ trip_id: tripId, user_id: userId, amount: Number(amount), title: title.trim() || null }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error ?? "申請に失敗しました。もう一度お試しください");
+        return;
+      }
+      setTitle("");
+      setAmount("");
+      onDone();
+    } catch {
+      setError("通信エラーが発生しました。もう一度お試しください");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
       <p className="text-xs text-gray-500">＋ 積立を追加申請する</p>
+      <p className="text-xs text-gray-400 leading-relaxed">
+        ここは共通口座に「入金した金額」を申請する場所です。旅行中に実際に使ったお金（立替・カード払い）は「支出を記録する」ボタンから記録してください。
+      </p>
+      {error && (
+        <p className="text-xs text-red-500">⚠️ {error}</p>
+      )}
       <input
         type="text"
         value={title}

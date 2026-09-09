@@ -111,3 +111,14 @@ CREATE INDEX IF NOT EXISTS idx_savings_trip_id ON savings(trip_id);
 CREATE INDEX IF NOT EXISTS idx_expenses_trip_id ON expenses(trip_id);
 CREATE INDEX IF NOT EXISTS idx_expense_beneficiaries_expense_id
   ON expense_beneficiaries(expense_id);
+
+-- ============================================================
+-- Realtime（各自の精算状況をリアルタイム反映するため）
+-- ============================================================
+-- 支出・積立・旅行の変更をブラウザへリアルタイム配信できるようにする。
+-- 既存DBへの適用: Supabase SQL Editorで以下を実行（テーブルは既に
+-- publication に含まれている場合はエラーになるため、含まれていない
+-- テーブルのみ実行すること）。
+ALTER PUBLICATION supabase_realtime ADD TABLE expenses;
+ALTER PUBLICATION supabase_realtime ADD TABLE savings;
+ALTER PUBLICATION supabase_realtime ADD TABLE trips;

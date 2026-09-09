@@ -196,10 +196,16 @@ export default function ExpenseForm() {
                       : "border-gray-200 text-gray-500"
                   }`}
                 >
-                  {t === "card" ? "💳 共通カード" : "💴 立替"}
+                  {t === "card" ? "💳 共通カード" : "💴 立替（自分の財布）"}
                 </button>
               ))}
             </div>
+            <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
+              {paymentType === "card"
+                ? "共通プール（積立金）から支払い済みの支出です。"
+                : "自分の財布から一時的に立て替えた支出です。後日この立替分が精算されます。"}
+              {" "}※ここは実際に使ったお金の記録です。口座への入金申請（積立）はホーム画面の「＋ 積立を追加申請する」から行ってください。
+            </p>
           </div>
 
           {/* 支払者 */}

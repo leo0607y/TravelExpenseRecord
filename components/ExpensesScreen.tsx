@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useLiff } from "./LiffProvider";
 import { useTheme } from "@/lib/theme-context";
+import { useTripRealtime } from "@/lib/useTripRealtime";
 import OceanWave from "./guam-illustrations/OceanWave";
 import GuamAccent from "./guam-illustrations/GuamAccent";
 import ThemeAccentStrip from "./ThemeAccentStrip";
@@ -27,6 +28,7 @@ export default function ExpensesScreen() {
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState("");
   const [savingAmount, setSavingAmount] = useState(false);
+  const [amountError, setAmountError] = useState<string | null>(null);
 
   const fetchExpenses = useCallback(async () => {
     if (!activeTrip) return;
@@ -48,18 +50,32 @@ export default function ExpensesScreen() {
 
   useEffect(() => { fetchExpenses(); }, [fetchExpenses]);
 
+  // 他のメンバーが支出・積立を変更した瞬間にも一覧を自動更新する
+  useTripRealtime(activeTrip?.trip_id, fetchExpenses);
+
   const updateExpenseAmount = async (expenseId: string) => {
     const newAmount = Number(editAmount);
     if (!newAmount || newAmount <= 0) return;
     setSavingAmount(true);
-    await fetch(`/api/expenses/${expenseId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount: newAmount }),
-    });
-    setEditingExpenseId(null);
-    setSavingAmount(false);
-    fetchExpenses();
+    setAmountError(null);
+    try {
+      const res = await fetch(`/api/expenses/${expenseId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: newAmount }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setAmountError(body.error ?? "修正に失敗しました。もう一度お試しください");
+        return;
+      }
+      setEditingExpenseId(null);
+      await fetchExpenses();
+    } catch {
+      setAmountError("通信エラーが発生しました。もう一度お試しください");
+    } finally {
+      setSavingAmount(false);
+    }
   };
 
   const totalCard = expenses.filter((e) => e.payment_type === "card").reduce((s, e) => s + e.amount, 0);
@@ -83,6 +99,10 @@ export default function ExpensesScreen() {
         </div>
         <ThemeAccentStrip count={9} start={3} className="mt-3 opacity-45" itemClassName="w-7 h-7" />
       </div>
+
+      {amountError && (
+        <div className="mx-4 mt-4 bg-red-50 text-red-600 rounded-xl p-3 text-sm">⚠️ {amountError}</div>
+      )}
 
       {/* 合計サマリー */}
       <div className="mx-4 mt-4 bg-white rounded-2xl p-4 shadow-sm">
