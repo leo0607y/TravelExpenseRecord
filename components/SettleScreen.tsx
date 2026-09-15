@@ -9,18 +9,20 @@ import GuamAccent from "./guam-illustrations/GuamAccent";
 import ThemeAccent from "./ThemeAccent";
 import ThemeAccentStrip from "./ThemeAccentStrip";
 import KoreaAccent from "./korea-illustrations/KoreaAccent";
-import type { TripSummary, Expense } from "@/types";
+import type { TripSummary, Expense, SettlementTransfer } from "@/types";
 
 type ExpenseWithPayer = Expense & { payer: { display_name: string } };
+type TripSummaryWithTransfers = TripSummary & { transfers: SettlementTransfer[] | null };
 
 export default function SettleScreen() {
   const router = useRouter();
-  const { activeTrip, members, isAdmin, reload } = useLiff();
+  const { activeTrip, members, currentUser, isAdmin, reload } = useLiff();
   const { theme } = useTheme();
-  const [summary, setSummary] = useState<TripSummary | null>(null);
+  const [summary, setSummary] = useState<TripSummaryWithTransfers | null>(null);
   const [expenses, setExpenses] = useState<ExpenseWithPayer[]>([]);
   const [nextTitle, setNextTitle] = useState("次の旅行");
   const [settling, setSettling] = useState(false);
+  const [completingId, setCompletingId] = useState<string | null>(null);
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState("");
   const [savingAmount, setSavingAmount] = useState(false);
@@ -77,7 +79,7 @@ export default function SettleScreen() {
     }
   };
 
-  const settle = async () => {
+  const declare = async () => {
     if (!activeTrip) return;
     setSettling(true);
 
@@ -88,10 +90,37 @@ export default function SettleScreen() {
     });
 
     if (res.ok) {
-      reload();
-      router.push("/");
+      const data = await res.json();
+      if (data.finalized) {
+        reload();
+        router.push("/");
+        return;
+      }
+      await fetchSummary();
     }
     setSettling(false);
+  };
+
+  const completeTransfer = async (transferId: string) => {
+    if (!currentUser) return;
+    setCompletingId(transferId);
+    try {
+      const res = await fetch(`/api/settle/transfers/${transferId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requesterId: currentUser.user_id }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.finalized) {
+        reload();
+        router.push("/");
+        return;
+      }
+      await fetchSummary();
+    } finally {
+      setCompletingId(null);
+    }
   };
 
   const openReport = () => {
@@ -114,6 +143,8 @@ export default function SettleScreen() {
   }
 
   const shortfall = summary.pool_balance < 0 ? Math.abs(Math.round(summary.pool_balance)) : 0;
+  const declared = summary.transfers !== null;
+  const pendingCount = summary.transfers?.filter((t) => t.status === "pending").length ?? 0;
 
   return (
     <div className="min-h-screen pb-24">
@@ -163,8 +194,20 @@ export default function SettleScreen() {
           </div>
         )}
 
-        {/* 支出一覧（管理者のみ金額修正可能） */}
-        {isAdmin && expenses.length > 0 && (
+        {/* 精算確定済みバナー */}
+        {declared && (
+          <div className="bg-blue-50 rounded-2xl p-4 shadow-sm border border-blue-200 text-center">
+            <p className="text-sm font-bold text-blue-700">
+              {pendingCount > 0
+                ? `🔒 送金ルートが確定しました。送金完了を${pendingCount}件待っています`
+                : "✅ 全員の送金が完了しました！自動的に次の旅行に切り替わります"}
+            </p>
+            <p className="text-xs text-blue-500 mt-1">支出金額はもう修正できません</p>
+          </div>
+        )}
+
+        {/* 支出一覧（管理者のみ金額修正可能・締め宣言前のみ） */}
+        {isAdmin && !declared && expenses.length > 0 && (
           <div className="bg-white rounded-2xl p-4 shadow-sm">
             <p className="text-xs text-gray-500 mb-3">📋 支出一覧（金額を修正できます）</p>
             {amountError && (
@@ -275,9 +318,9 @@ export default function SettleScreen() {
         {/* 送金ナビゲーション */}
         <div className="bg-white rounded-2xl p-4 shadow-sm">
           <p className="text-xs text-gray-500 mb-3">💸 送金ナビゲーション</p>
-          {summary.settlement_routes.length === 0 ? (
+          {!declared && summary.settlement_routes.length === 0 ? (
             <p className="text-sm text-gray-400 text-center py-2">送金不要！完全に釣り合っています</p>
-          ) : (
+          ) : !declared ? (
             <div className="space-y-2">
               {summary.settlement_routes.map((r, i) => (
                 <div key={i} className="relative flex items-center gap-2 bg-orange-50 rounded-xl p-3 overflow-hidden">
@@ -296,11 +339,52 @@ export default function SettleScreen() {
                 </div>
               ))}
             </div>
+          ) : (
+            <div className="space-y-2">
+              {(summary.transfers ?? []).map((t, i) => {
+                const sent = t.status === "sent";
+                const canComplete = !sent && (currentUser?.user_id === t.from_user_id || isAdmin);
+                return (
+                  <div
+                    key={t.transfer_id}
+                    className={`relative flex flex-wrap items-center gap-2 rounded-xl p-3 overflow-hidden ${sent ? "bg-green-50" : "bg-orange-50"}`}
+                  >
+                    <span className="text-sm font-bold text-gray-700">{t.from_name}</span>
+                    <span className="text-orange-400">➔</span>
+                    <span className="text-sm font-bold text-gray-700">{t.to_name}</span>
+                    <span className="text-sm font-black text-orange-600">
+                      ¥{t.amount.toLocaleString()}
+                    </span>
+                    <div className="ml-auto">
+                      {sent ? (
+                        <span className="text-xs font-bold text-green-600">✅ 送信完了</span>
+                      ) : canComplete ? (
+                        <button
+                          onClick={() => completeTransfer(t.transfer_id)}
+                          disabled={completingId === t.transfer_id}
+                          className="text-xs bg-brand-green text-white rounded-lg px-3 py-1.5 font-bold disabled:opacity-50 whitespace-nowrap"
+                        >
+                          {completingId === t.transfer_id ? "送信中..." : "送信完了にする"}
+                        </button>
+                      ) : (
+                        <span className="text-xs text-gray-400">未送信</span>
+                      )}
+                    </div>
+                    {theme === "guam" && (
+                      <GuamAccent index={i} className="absolute -right-1 -bottom-1 w-7 h-7 opacity-20 pointer-events-none" />
+                    )}
+                    {theme === "korea" && (
+                      <KoreaAccent index={i} className="absolute -right-1 -bottom-1 w-7 h-7 opacity-20 pointer-events-none" />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
 
         {/* 次の旅行タイトル */}
-        {isAdmin && (
+        {isAdmin && !declared && (
           <div className="bg-white rounded-2xl p-4 shadow-sm">
             <label className="text-xs text-gray-500">次の旅行のタイトル</label>
             <input
@@ -314,14 +398,14 @@ export default function SettleScreen() {
       </div>
 
       {/* 固定フッター */}
-      {isAdmin && (
+      {isAdmin && !declared && (
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t">
           <button
-            onClick={settle}
+            onClick={declare}
             disabled={settling}
             className="w-full bg-red-500 text-white rounded-2xl py-4 text-lg font-bold shadow-lg disabled:opacity-50"
           >
-            {settling ? "処理中..." : "✅ 送金確認済み・プロジェクト締める"}
+            {settling ? "処理中..." : "🔔 精算を確定してBotに通知する"}
           </button>
         </div>
       )}

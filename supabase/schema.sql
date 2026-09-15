@@ -33,11 +33,13 @@ CREATE TABLE IF NOT EXISTS trips (
   carry_over_in INTEGER NOT NULL DEFAULT 0,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   last_daily_summary_sent_on       DATE, -- 本日の支出サマリーを最後に送った日（同日の二重実行での再送防止）
-  last_savings_reminder_sent_month TEXT  -- 月次積立リマインドを最後に送った月 'YYYY-MM'（同月の二重実行での再送防止）
+  last_savings_reminder_sent_month TEXT, -- 月次積立リマインドを最後に送った月 'YYYY-MM'（同月の二重実行での再送防止）
+  next_trip_title TEXT -- 精算宣言時に指定した次回旅行タイトル（全送金完了時に自動作成する旅行の名前に使う）
 );
 -- ※ 既存DBへの適用:
 --   ALTER TABLE trips ADD COLUMN IF NOT EXISTS last_daily_summary_sent_on DATE;
 --   ALTER TABLE trips ADD COLUMN IF NOT EXISTS last_savings_reminder_sent_month TEXT;
+--   ALTER TABLE trips ADD COLUMN IF NOT EXISTS next_trip_title TEXT;
 
 -- Savings（積立・入金履歴）
 CREATE TABLE IF NOT EXISTS savings (
@@ -97,6 +99,27 @@ CREATE TABLE IF NOT EXISTS reminders (
 CREATE INDEX IF NOT EXISTS idx_reminders_pending ON reminders(send_at) WHERE sent_at IS NULL;
 -- ※ 既存DBへの適用: 上記の CREATE TABLE / CREATE INDEX をSupabase SQL Editorでそのまま実行すればよい
 
+-- SettlementTransfers（旅行の締め宣言時に確定する送金ルートと、各送金の完了状況）
+-- 「締める」を宣言した時点の送金ルートをスナップショットとして保存し、
+-- 全レコードが 'sent' になった瞬間に自動で旅行を settled にして次の旅行を作成する。
+-- ※ from_user_id / to_user_id は users(user_id) への外部キーを付けていない。
+--   本番DBのusersテーブルに一意制約が想定通り付いておらず
+--   REFERENCES users(user_id) がエラーになったため（42830、reminders テーブルと同じ事情）。
+--   ユーザーの正当性チェックはアプリ側（APIルート）で行っている。
+CREATE TABLE IF NOT EXISTS settlement_transfers (
+  transfer_id  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  trip_id      UUID NOT NULL REFERENCES trips(trip_id) ON DELETE CASCADE,
+  from_user_id TEXT NOT NULL,
+  to_user_id   TEXT NOT NULL,
+  amount       INTEGER NOT NULL CHECK (amount > 0),
+  status       TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'sent')),
+  sent_at      TIMESTAMPTZ,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_settlement_transfers_trip_id ON settlement_transfers(trip_id);
+-- ※ 既存DBへの適用: 上記の CREATE TABLE / CREATE INDEX と、下記のPublication追加をSupabase SQL Editorで実行すること
+--   ALTER PUBLICATION supabase_realtime ADD TABLE settlement_transfers;
+
 -- ============================================================
 -- Storage バケット（画像アップロード用）
 -- ============================================================
@@ -122,3 +145,4 @@ CREATE INDEX IF NOT EXISTS idx_expense_beneficiaries_expense_id
 ALTER PUBLICATION supabase_realtime ADD TABLE expenses;
 ALTER PUBLICATION supabase_realtime ADD TABLE savings;
 ALTER PUBLICATION supabase_realtime ADD TABLE trips;
+ALTER PUBLICATION supabase_realtime ADD TABLE settlement_transfers;

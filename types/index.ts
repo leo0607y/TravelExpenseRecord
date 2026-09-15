@@ -30,6 +30,7 @@ export interface Trip {
   created_at: string;
   last_daily_summary_sent_on?: string | null;
   last_savings_reminder_sent_month?: string | null;
+  next_trip_title?: string | null;
 }
 
 export interface Saving {
@@ -101,6 +102,22 @@ export interface TripSummary {
   benefit_per_user: Record<string, number>; // userId → Benefit_i
   net_positions: NetPosition[];
   settlement_routes: SettlementRoute[];
+}
+
+// 送金の実行状況（旅行の締め宣言時に確定・記録される送金ルート）
+export type SettlementTransferStatus = "pending" | "sent";
+
+export interface SettlementTransfer {
+  transfer_id: string;
+  trip_id: string;
+  from_user_id: string;
+  from_name: string;
+  to_user_id: string;
+  to_name: string;
+  amount: number;
+  status: SettlementTransferStatus;
+  sent_at: string | null;
+  created_at: string;
 }
 
 // LIFF Context

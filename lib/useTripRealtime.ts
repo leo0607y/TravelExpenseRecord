@@ -33,6 +33,11 @@ export function useTripRealtime(tripId: string | null | undefined, onChange: () 
         { event: "*", schema: "public", table: "trips", filter: `trip_id=eq.${tripId}` },
         () => onChangeRef.current()
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "settlement_transfers", filter: `trip_id=eq.${tripId}` },
+        () => onChangeRef.current()
+      )
       .subscribe();
 
     return () => {
