@@ -146,3 +146,25 @@ ALTER PUBLICATION supabase_realtime ADD TABLE expenses;
 ALTER PUBLICATION supabase_realtime ADD TABLE savings;
 ALTER PUBLICATION supabase_realtime ADD TABLE trips;
 ALTER PUBLICATION supabase_realtime ADD TABLE settlement_transfers;
+
+-- ============================================================
+-- データAPI権限（GRANT）
+-- ============================================================
+-- Supabaseは 2026-10-30 以降、public スキーマに「新しく作ったテーブル」へ
+-- anon / authenticated / service_role の権限を自動付与しなくなる。
+-- （既存テーブルの権限はそのまま残るので、本番DBでの対応は不要）
+-- 新規プロジェクト・DB作り直し時にも動くよう、ここで明示的に付与する。
+--
+-- 本アプリのアクセス経路:
+--   - service_role: APIルート（lib/supabase/server.ts）からの全読み書き → 全テーブルに全権限
+--   - anon: ブラウザ（lib/useTripRealtime.ts）のRealtime購読のみ → 購読対象テーブルにSELECTのみ
+--   - authenticated: Supabase Authを使っていない（LINEログイン）ため付与しない
+--
+-- ★ 今後テーブルを追加するときは、CREATE TABLE と一緒に下記と同様の GRANT も書くこと。
+--   Realtime購読するテーブルなら anon への SELECT も必要。
+GRANT SELECT, INSERT, UPDATE, DELETE ON
+  groups, users, trips, savings, expenses, expense_beneficiaries,
+  reminders, settlement_transfers
+  TO service_role;
+
+GRANT SELECT ON expenses, savings, trips, settlement_transfers TO anon;
